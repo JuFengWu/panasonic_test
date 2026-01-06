@@ -84,7 +84,28 @@ PDSState getPDS(uint16 sw)
     if ((sw & 0x004F) == 0x0008) return FAULT;
     return UNKNOWN;
 }
-
+/*
+    SET PDO maping 4   
+			Index	  Size(bit)	Name
+    RxPDO (1603h)	6040h 00h 16 Controlword
+			6060h 00h  8 Modes of operation
+			6071h 00h 16 Target Torque
+			6072h 00h 16 Max torque
+			607Ah 00h 32 Target Position
+			6080h 00h 32 Max motor speed
+			60B8h 00h 16 Touch probe function
+			60FFh 00h 32 Target Velocity
+    TxPDO (1A03h)
+			603Fh 00h 16 Error code
+			6041h 00h 16 Statusword
+			6061h 00h  8 Modes of operation display
+			6064h 00h 32 Position actual value
+			606Ch 00h 32 Velocity actual value
+			6077h 00h 16 Torque actual value
+			60B9h 00h 16 Touch probe status
+			60BAh 00h 32 Touch probe pos1 pos val
+			60FDh 00h 32 Digital inputs
+   */
 bool servoOnPDO_mapping4(uint16 slave)
 {
     uint8 *out = (uint8*)ec_slave[slave].outputs; // 25 bytes
@@ -489,6 +510,74 @@ bool setup_minasa6b_pdo_mapping4(uint16 slave)
     return (ret > 0);
 }
 
+inline bool shutdown_ecat(uint16 slave_id,
+                          volatile int *run_pdo_flag,
+                          pthread_t *pdo_thread_handle,
+                          int pdo_cycle_us = 4000)
+{
+    bool ok = true;
+
+    printf("\n========== shutdown_ecat() ==========\n");
+
+    // 1) Servo OFF（若失敗也繼續往下做 SAFE_OP 避免 watchdog）
+    printf("[shutdown] Servo OFF...\n");
+    if (!servoOffPDO_mapping4(slave_id))
+    {
+        printf("[shutdown] WARNING: Servo OFF failed\n");
+        ok = false;
+    }
+    else
+    {
+        printf("[shutdown] Servo OFF done\n");
+    }
+
+    // 2) Servo OFF 後保持 PDO 交換 300ms
+    printf("[shutdown] Keep PDO exchange 300ms...\n");
+    usleep(300000);
+
+    // 3) 退回 SAFE_OP（最重要，避免 watchdog）
+    printf("[shutdown] Switch master to SAFE_OP...\n");
+    ec_slave[0].state = EC_STATE_SAFE_OP;
+    ec_writestate(0);
+
+    // 等待 master/slaves 真正進 SAFE_OP
+    if (ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE) != EC_STATE_SAFE_OP)
+    {
+        printf("[shutdown] WARNING: Not all slaves reached SAFE_OP\n");
+        ok = false;
+    }
+    else
+    {
+        printf("[shutdown] SAFE_OP reached\n");
+    }
+
+    // 4) 再送 200ms PDO（讓 transition 穩定）
+    printf("[shutdown] Keep PDO exchange 200ms...\n");
+    usleep(200000);
+
+    // 5) 停 PDO thread
+    printf("[shutdown] Stop PDO thread...\n");
+    if (run_pdo_flag && *run_pdo_flag)
+    {
+        *run_pdo_flag = 0;
+    }
+
+    if (pdo_thread_handle)
+    {
+        pthread_join(*pdo_thread_handle, NULL);
+        printf("[shutdown] PDO thread joined\n");
+    }
+
+    // 6) close EtherCAT
+    printf("[shutdown] ec_close()\n");
+    ec_close();
+
+    printf("[shutdown] Done. ok=%d\n", ok);
+    printf("=====================================\n\n");
+
+    return ok;
+}
+
 /* ================== main: 整個流程串起來 ================== */
 
 int main(int argc, char *argv[])
@@ -683,24 +772,6 @@ int main(int argc, char *argv[])
 
     printf("=== Move test done ===\n");
 
-    // ✅ Servo OFF
-    printf("開始 Servo OFF...\n");
-    if (!servoOffPDO_mapping4(SLAVE_ID))
-    {
-        printf("Servo OFF 失敗\n");
-        run_pdo = 0;
-        pthread_join(pdo_thread, NULL);
-        ec_close();
-        return -1;
-    }
-    printf("Servo OFF 完成\n");
-
-    
-
-    // ✅ 停掉 PDO thread
-    run_pdo = 0;
-    pthread_join(pdo_thread, NULL);
-
-    ec_close();
+    shutdown_ecat(SLAVE_ID, &run_pdo, &pdo_thread);
     return 0;
 }

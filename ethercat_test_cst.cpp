@@ -164,23 +164,6 @@ void init_motion_params_pdo(uint16 slave)
     // 60FF target velocity = 0 (PP 不用)
     set_i32(out, 17, 0);
 }
-bool set_profile_motion_params(uint16 slave)
-{
-    // 這些單位是 "internal position unit / s" 或 pulse/s
-    // 先用大一點讓你肉眼看得出來動
-    uint32 vel = 0x16000000;   // 你原本程式用過的值
-    uint32 acc = 0x80000000;
-    uint32 dec = 0x80000000;
-
-    bool ok = true;
-    ok &= sdo_write_u32(slave, 0x6081, 0x00, vel);
-    ok &= sdo_write_u32(slave, 0x6083, 0x00, acc);
-    ok &= sdo_write_u32(slave, 0x6084, 0x00, dec);
-
-    printf("Set 6081 vel=%u 6083 acc=%u 6084 dec=%u (%s)\n",
-           vel, acc, dec, ok ? "OK" : "FAIL");
-    return ok;
-}
 bool servoOffPDO_mapping4(uint16 slave)
 {
     uint8 *out = (uint8*)ec_slave[slave].outputs;
@@ -236,105 +219,6 @@ bool servoOffPDO_mapping4(uint16 slave)
                    sw, st, cw, err);
         }
     }
-}
-
-bool move_absolute_pp_pdo(uint16 slave, double target_deg)
-{
-    uint8 *out = (uint8*)ec_slave[slave].outputs;
-    uint8 *in  = (uint8*)ec_slave[slave].inputs;
-
-    int32 target_cmd = deg_to_command(target_deg);
-
-    printf("=== Before move ===\n");
-    dump_pdo(slave);
-
-    // 0) 等 bit10 先變 0（確保下一次會重新變 1）
-    int t = 0;
-    while (t < 1000)
-    {
-        uint16 sw = get_u16(in, 2);
-        if (!(sw & (1 << 10))) break;
-        usleep(1000);
-        t += 1;
-    }
-
-    // 1) 寫 target position (你目前用 offset=7)
-    set_i32(out, 7, target_cmd);
-
-    // 2) 控制字準備
-    uint16 cw = get_u16(out, 0);
-    cw |= 0x000F;          // enable
-    cw &= ~(1 << 6);       // absolute
-
-    // 先清 bit4
-    cw &= ~(1 << 4);
-    set_u16(out, 0, cw);
-    usleep(2000);
-
-    // 再 set bit4
-    cw |= (1 << 4);
-    set_u16(out, 0, cw);
-
-    // 3) 等 bit12 ack = 1
-    t = 0;
-    while (t < 2000)
-    {
-        uint16 sw = get_u16(in, 2);
-        if (sw & (1 << 12)) break;
-        usleep(1000);
-        t += 1;
-    }
-
-    // 4) 等 bit10 reached = 1 + debug current position
-    int timeout_ms = 5000;
-    int elapsed = 0;
-    int next_print = 0;
-
-    while (elapsed < timeout_ms)
-    {
-        uint16 sw = get_u16(in, 2);
-        int32 act = get_i32(in, 5);   // 先用 5，但我們用 dump 來確認
-
-        if (elapsed >= next_print)
-        {
-            printf("[move dbg] t=%4dms sw=0x%04X act=%d target=%d diff=%d\n",
-                   elapsed, sw, act, target_cmd, target_cmd - act);
-            next_print += 100;
-        }
-
-        if (sw & (1 << 10))
-        {
-            printf("[move] reached target=%.2f deg cmd=%d sw=0x%04X act=%d diff=%d\n",
-                   target_deg, target_cmd, sw, act, target_cmd - act);
-
-            printf("=== After reached ===\n");
-            dump_pdo(slave);
-
-            // 清 bit4（讓下次 move toggle 有效）
-            cw &= ~(1 << 4);
-            set_u16(out, 0, cw);
-
-            return true;
-        }
-
-        usleep(10000);
-        elapsed += 10;
-    }
-
-    uint16 sw = get_u16(in, 2);
-    int32 act = get_i32(in, 5);
-
-    printf("[move] timeout! target=%.2f cmd=%d sw=0x%04X act=%d diff=%d\n",
-           target_deg, target_cmd, sw, act, target_cmd - act);
-
-    printf("=== After timeout ===\n");
-    dump_pdo(slave);
-
-    // 清 bit4
-    cw &= ~(1 << 4);
-    set_u16(out, 0, cw);
-
-    return false;
 }
 
 void print_state(){
@@ -619,8 +503,6 @@ int main(int argc, char *argv[])
     ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
 
     // ✅ 在 SAFEOP 做一次 SDO 設定 profile motion 參數（最穩）
-    set_profile_motion_params(SLAVE_ID);
-    print_state();
 
     // ====== 5. 交換 PDO（至少 1 次）======
     ec_send_processdata();
