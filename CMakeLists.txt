@@ -10,6 +10,8 @@ include_directories(${CMAKE_SOURCE_DIR}/oshw/linux)
 # 加入你的程式碼
 add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)
 
+target_include_directories(pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(pp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 
@@ -20,6 +22,7 @@ target_link_libraries(pp_mode pthread)
 # 加入你的程式碼
 add_executable(csv_mode ethercat_test_csv.cpp)
 
+target_include_directories(csv_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(csv_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 
@@ -29,7 +32,7 @@ target_link_libraries(csv_mode pthread)
 
 # 加入你的程式碼
 add_executable(csp_mode ethercat_test_csp_ok.cpp)
-
+target_include_directories(csp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(csp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 
@@ -39,7 +42,7 @@ target_link_libraries(csp_mode pthread)
 
 # 加入你的程式碼
 add_executable(cst_mode ethercat_test_cst.cpp)
-
+target_include_directories(cst_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(cst_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 

@@ -1,81 +1,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "ethercat.h"
+#include "utilities.hpp"
 #include <unistd.h>
 #define SLAVE_ID 1   // A6B 在 SOEM 裡的從站號（通常是 1）
 #define COUNTS_PER_REV  (double)0x800000  // 8388608
-/* ================== SDO 包裝函數 (SOEM) ================== */
 
-bool sdo_write_u8(uint16 slave, uint16 index, uint8 sub, uint8 val)
-{
-    int wkc = ec_SDOwrite(slave, index, sub, FALSE, sizeof(val), &val, EC_TIMEOUTRXM);
-    return (wkc > 0);
-}
-
-bool sdo_write_u16(uint16 slave, uint16 index, uint8 sub, uint16 val)
-{
-    int wkc = ec_SDOwrite(slave, index, sub, FALSE, sizeof(val), &val, EC_TIMEOUTRXM);
-    return (wkc > 0);
-}
-
-bool sdo_write_i32(uint16 slave, uint16 index, uint8 sub, int32 val)
-{
-    int wkc = ec_SDOwrite( slave, index, sub, FALSE, sizeof(val), &val, EC_TIMEOUTRXM);
-    return (wkc > 0);
-}
-
-bool sdo_read_u16(uint16 slave, uint16 index, uint8 sub, uint16 *out)
-{
-    uint16 val = 0;
-    int size = sizeof(val);
-    int wkc = ec_SDOread(slave, index, sub, FALSE, &size, &val, EC_TIMEOUTRXM);
-    if (wkc <= 0) return false;
-    *out = val;
-    return true;
-}
-bool sdo_write_i16(uint16 slave, uint16 index, uint8 sub, int16 val)
-{
-    int wkc = ec_SDOwrite( slave, index, sub, FALSE, sizeof(val), &val, EC_TIMEOUTRXM);
-    return (wkc > 0);
-}
-
-bool sdo_write_u32(uint16 slave, uint16 index, uint8 sub, uint32 val)
-{
-    int wkc = ecx_SDOwrite(&ecx_context, slave, index, sub,
-                          FALSE, sizeof(val), &val, EC_TIMEOUTRXM);
-
-    if (wkc <= 0)
-    {
-        printf("SDOwrite failed: %04X:%02X wkc=%d\n", index, sub, wkc);
-        if (EcatError)
-        {
-            printf("SOEM EcatError: %s\n", ec_elist2string());
-        }
-        return false;
-    }
-    return true;
-}
-
-bool sdo_read_u32(uint16 slave, uint16 index, uint8 sub, uint32 *out)
-{
-    uint32 val = 0;
-    int size = sizeof(val);
-    int wkc = ec_SDOread(slave, index, sub, FALSE, &size, &val, EC_TIMEOUTRXM);
-    if (wkc <= 0) return false;
-    *out = val;
-    return true;
-}
-
-bool sdo_read_u8(uint16 slave, uint16 index, uint8 sub, uint8 *out)
-{
-    uint8 val = 0;
-    int size = sizeof(val);
-    int wkc = ec_SDOread(slave, index, sub, FALSE, &size, &val, EC_TIMEOUTRXM);
-    if (wkc <= 0) return false;
-    *out = val;
-    return true;
-}
 /* ================== 單位換算：角度 → 指令值 ================== */
 
 static inline int32 get_i32(uint8 *p, int off)
