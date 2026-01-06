@@ -1,15 +1,12 @@
-#include "panasonicA6B.hpp"
-#include "cyclicSession.hpp"
+#include "motionSystem.hpp"
 #include <iostream>
 #include <memory>
 
 static void on_cycle(Motors& motors, bool& break_loop) {
-  auto* t = static_cast<double*>(user);
-  *t += dt_sec;
 
-  auto currentPosition = motors[0].position();
+  auto currentPosition = motors.motor(1).get_current_position();
   std::cout << "Current Position: " << currentPosition << std::endl;
-  auto errorState = motors.get_id(1).error_state();
+  auto errorState = motors.motor(1).get_error_code();
   std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
   (void)break_loop;
 }
@@ -25,14 +22,14 @@ int main(){
   MotionSystem sys;
 
   // ✅ open: 內部完成掃描/config/map/SAFEOP SDO init（此時不啟動 cyclic thread）
-  if (!sys.open(ifname))
+  if (!sys.open(ifname, 2, PanasonicA6BMotor, PP_Mode))
   {
       printf("sys.open 失敗\n");
       return -1;
   }
 
   // 取得 motors 與 session（使用者可見）
-  auto& motors = sys.motors(PP_Mode);
+  auto& motors = sys.motors();
   auto& sess   = sys.session();
 
   Motor& m1 = motors.motor(1); 

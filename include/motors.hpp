@@ -6,6 +6,11 @@ typedef enum {
     UNKNOWN
 } MotorModes;
 
+typedef enum {
+    PanasonicA6BMotor,
+    UnknownMotor
+} MotorModel;
+
 struct MotionProfile {
     int vel;
     int acc;
