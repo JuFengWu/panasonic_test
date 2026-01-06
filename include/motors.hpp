@@ -4,7 +4,7 @@ typedef enum {
     CSV_Mode,
     CST_Mode,
     UNKNOWN
-} Modes;
+} MotorModes;
 
 struct MotionProfile {
     int vel;
@@ -14,8 +14,8 @@ struct MotionProfile {
 
 class Motor{
  public:
-  Motor(int slave);
-  virtual bool set_mode()=0;
+  Motor(int slave, MotorModes mode);
+  virtual bool set_mode(MotorModes mode)=0;
   virtual bool set_target_position(float)=0;
   virtual bool set_target_velocity(float)=0;
   virtual bool set_target_torque(float)=0;
@@ -27,4 +27,8 @@ class Motor{
   virtual int get_current_position()=0;
   virtual int get_current_velocity()=0;
   virtual int get_current_torque()=0;
+
+ protected:
+  int slave_;
+  MotorModes mode_;
 };

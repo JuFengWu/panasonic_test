@@ -4,9 +4,9 @@
 
 class PanasonicA6B : public Motor {
  public:
-  explicit PanasonicA6B(int slave);
+  PanasonicA6B(int slave, MotorModes mode);
 
-  bool set_mode() override;
+  bool set_mode(MotorModes mode) override;
   bool set_target_position(float target) override;
   bool set_target_velocity(float target) override;
   bool set_target_torque(float target) override;
@@ -19,6 +19,4 @@ class PanasonicA6B : public Motor {
   int get_current_velocity() override;
   int get_current_torque() override;
 
- private:
-  int slave_;
 };

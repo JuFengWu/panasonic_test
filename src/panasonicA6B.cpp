@@ -1,11 +1,15 @@
 #include "panasonicA6B.hpp"
 
-Motor::Motor(int slave) { (void)slave; }
+Motor::Motor(int slave, MotorModes mode) : slave_(slave), mode_(mode) {}
 
-PanasonicA6B::PanasonicA6B(int slave)
-    : Motor(slave), slave_(slave) {}
+PanasonicA6B::PanasonicA6B(int slave, MotorModes mode)
+    : Motor(slave, mode) {}
 
-bool PanasonicA6B::set_mode() { return false; }
+bool PanasonicA6B::set_mode(MotorModes mode)
+{
+  mode_ = mode;
+  return true;
+}
 
 bool PanasonicA6B::set_target_position(float target)
 {
