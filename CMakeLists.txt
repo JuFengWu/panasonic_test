@@ -12,6 +12,9 @@ add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)
 
 target_include_directories(pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+add_executable(test_pp_mode src/test_pp_mode.cpp src/panasonicA6B.cpp)
+target_include_directories(test_pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(pp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 

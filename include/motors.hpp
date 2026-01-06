@@ -15,5 +15,7 @@ class Motor{
   virtual bool set_target_velocity(float)=0;
   virtual bool set_target_torque(float)=0;
   virtual int get_error_code()=0;
-  virtual int get_error_code()=0;
+  virtual int get_current_position()=0;
+  virtual int get_current_velocity()=0;
+  virtual int get_current_torque()=0;
 };
