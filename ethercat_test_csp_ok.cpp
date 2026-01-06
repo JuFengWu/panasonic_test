@@ -617,7 +617,7 @@ void csp_move_back_and_forth(uint16 slave, double posA_deg, double posB_deg, int
 
 int main(int argc, char *argv[])
 {
-    char *ifname;
+    const char *ifname;
 
     if (argc > 1)
         ifname = argv[1];         // 例如: ./a.out enp2s0

@@ -563,7 +563,7 @@ bool setup_minasa6b_pdo_mapping4(uint16 slave)
 
 int main(int argc, char *argv[])
 {
-    char *ifname;
+    const char *ifname;
 
     if (argc > 1)
         ifname = argv[1];         // 例如: ./a.out enp2s0

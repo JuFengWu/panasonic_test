@@ -636,7 +636,7 @@ void cst_torque_test(uint16 slave, int16 tq_cmd, int cycles)
 
 int main(int argc, char *argv[])
 {
-    char *ifname;
+    const char *ifname;
 
     if (argc > 1)
         ifname = argv[1];         // 例如: ./a.out enp2s0

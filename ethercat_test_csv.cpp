@@ -625,7 +625,7 @@ void csv_velocity_test(uint16 slave, int32 vel_cmd, int cycles)
 
 int main(int argc, char *argv[])
 {
-    char *ifname;
+    const char *ifname;
 
     if (argc > 1)
         ifname = argv[1];         // 例如: ./a.out enp2s0
