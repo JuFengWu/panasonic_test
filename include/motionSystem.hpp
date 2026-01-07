@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-class Motors {
+class AllMotors {
  public:
   void initialize(MotorModel model, MotorModes mode, int count);
   Motor& motor(int id);
@@ -16,7 +16,7 @@ class Motors {
   std::unique_ptr<Motor> create_motor(int id);
 
   std::vector<std::unique_ptr<Motor>> motors_;
-  MotorModel model_ = PanasonicA6BMotor;
+  MotorModel model_ = PanasonicA6BMotorType;
   MotorModes mode_ = PP_Mode;
 };
 
@@ -24,20 +24,21 @@ class MotionSystem {
  public:
   MotionSystem() = default;
 
-  bool open(const char* ifname, int motor_count, MotorModel model, MotorModes mode=PP_Mode);
-  Motors& motors();
+  bool start_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode=PP_Mode);
+
+  AllMotors& motors();
   CyclicSession& session();
   bool run_async();
   void stop();
   void close();
 
  private:
-  Motors motors_;
+  AllMotors motors_;
   CyclicSession session_;
   bool opened_ = false;
   bool running_ = false;
   bool initialized_ = false;
-  MotorModel model_ = PanasonicA6BMotor;
+  MotorModel model_ = PanasonicA6BMotorType;
   MotorModes mode_ = PP_Mode;
   int motor_count_ = 0;
 };

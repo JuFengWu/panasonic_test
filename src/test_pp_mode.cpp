@@ -2,7 +2,7 @@
 #include <iostream>
 #include <memory>
 
-static void on_cycle(Motors& motors, bool& break_loop) {
+static void on_cycle(AllMotors& motors, bool& break_loop) {
 
   auto currentPosition = motors.motor(1).get_current_position();
   std::cout << "Current Position: " << currentPosition << std::endl;
@@ -22,7 +22,7 @@ int main(){
   MotionSystem sys;
 
   // ✅ open: 內部完成掃描/config/map/SAFEOP SDO init（此時不啟動 cyclic thread）
-  if (!sys.open(ifname, 2, PanasonicA6BMotor, PP_Mode))
+  if (!sys.start_connect(ifname, 2, PanasonicA6BMotorType, PP_Mode))
   {
       printf("sys.open 失敗\n");
       return -1;

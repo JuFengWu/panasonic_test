@@ -2,11 +2,11 @@
 
 #include <functional>
 
-class Motors;
+class AllMotors;
 
 class CyclicSession{
  public:
-  using Callback = std::function<void(Motors&, bool&)>;
+  using Callback = std::function<void(AllMotors&, bool&)>;
 
   CyclicSession();
   ~CyclicSession();

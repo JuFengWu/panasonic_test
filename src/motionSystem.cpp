@@ -1,6 +1,7 @@
 #include "motionSystem.hpp"
+#include "fakeMotor.hpp"
 
-void Motors::initialize(MotorModel model, MotorModes mode, int count)
+void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
 {
   model_ = model;
   mode_ = mode;
@@ -11,7 +12,7 @@ void Motors::initialize(MotorModel model, MotorModes mode, int count)
   }
 }
 
-Motor& Motors::motor(int id)
+Motor& AllMotors::motor(int id)
 {
   if (id <= 0) {
     id = 1;
@@ -26,19 +27,19 @@ Motor& Motors::motor(int id)
   return *motors_.at(idx);
 }
 
-int Motors::count() const { return static_cast<int>(motors_.size()); }
+int AllMotors::count() const { return static_cast<int>(motors_.size()); }
 
-std::unique_ptr<Motor> Motors::create_motor(int id)
+std::unique_ptr<Motor> AllMotors::create_motor(int id)
 {
   switch (model_) {
-    case PanasonicA6BMotor:
+    case PanasonicA6BMotorType:
       return std::make_unique<PanasonicA6B>(id, mode_);
     default:
-      return std::make_unique<PanasonicA6B>(id, mode_);
+      return std::make_unique<FakeMotor>(id, mode_);
   }
 }
 
-bool MotionSystem::open(const char* ifname, int motor_count, MotorModel model, MotorModes mode)
+bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode)
 {
   (void)ifname;
   opened_ = true;
@@ -50,7 +51,7 @@ bool MotionSystem::open(const char* ifname, int motor_count, MotorModel model, M
   return true;
 }
 
-Motors& MotionSystem::motors() { return motors_; }
+AllMotors& MotionSystem::motors() { return motors_; }
 
 CyclicSession& MotionSystem::session() { return session_; }
 

@@ -1,3 +1,4 @@
+#pragma once
 typedef enum {
     PP_Mode,
     CSP_Mode,
@@ -7,8 +8,9 @@ typedef enum {
 } MotorModes;
 
 typedef enum {
-    PanasonicA6BMotor,
-    UnknownMotor
+    PanasonicA6BMotorType,
+    FakeMotorType,
+    UnknownMotorType
 } MotorModel;
 
 struct MotionProfile {
