@@ -14,9 +14,11 @@ target_include_directories(pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 add_executable(test_pp_mode
     src/test_pp_mode.cpp
+    src/fakeInitializer.cpp
     src/panasonicA6B.cpp
     src/fakeMotor.cpp
     src/motionSystem.cpp
+    src/soemInitializer.cpp
     src/cyclicSession.cpp
 )
 target_include_directories(test_pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)

@@ -1,5 +1,7 @@
 #include "motionSystem.hpp"
+#include "fakeInitializer.hpp"
 #include "fakeMotor.hpp"
+#include "soemInitializer.hpp"
 
 void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
 {
@@ -41,14 +43,15 @@ std::unique_ptr<Motor> AllMotors::create_motor(int id)
 
 bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode)
 {
-  (void)ifname;
-  opened_ = true;
   model_ = model;
   motor_count_ = motor_count;
   mode_ = mode;
   motors_.initialize(model_, mode_, motor_count_);
-  initialized_ = true;
-  return true;
+  initializer_ = create_initializer(model_);
+  if (!initializer_) {
+    return false;
+  }
+  return initializer_->motor_initial_connect(ifname, motor_count, model, mode);
 }
 
 AllMotors& MotionSystem::motors() { return motors_; }
@@ -57,15 +60,32 @@ CyclicSession& MotionSystem::session() { return session_; }
 
 bool MotionSystem::run_async()
 {
-  if (!opened_) return false;
-  running_ = true;
-  return true;
+  if (!initializer_) return false;
+  return initializer_->run_async();
 }
 
-void MotionSystem::stop() { running_ = false; }
+void MotionSystem::stop()
+{
+  if (initializer_) {
+    initializer_->stop();
+  }
+}
 
 void MotionSystem::close()
 {
-  running_ = false;
-  opened_ = false;
+  if (initializer_) {
+    initializer_->close();
+  }
+}
+
+std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel model)
+{
+  switch (model) {
+    case FakeMotorType:
+      return std::make_unique<FakeInitializer>();
+    case PanasonicA6BMotorType:
+      return std::make_unique<SoemInitializer>();
+    default:
+      return nullptr;
+  }
 }

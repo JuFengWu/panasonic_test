@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cyclicSession.hpp"
+#include "motionInitializer.hpp"
 #include "panasonicA6B.hpp"
 
 #include <memory>
@@ -33,12 +34,12 @@ class MotionSystem {
   void close();
 
  private:
+  std::unique_ptr<IMotionInitializer> create_initializer(MotorModel model);
+
   AllMotors motors_;
   CyclicSession session_;
-  bool opened_ = false;
-  bool running_ = false;
-  bool initialized_ = false;
   MotorModel model_ = PanasonicA6BMotorType;
   MotorModes mode_ = PP_Mode;
   int motor_count_ = 0;
+  std::unique_ptr<IMotionInitializer> initializer_;
 };
