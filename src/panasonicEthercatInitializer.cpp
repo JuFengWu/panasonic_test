@@ -1,6 +1,6 @@
-#include "soemInitializer.hpp"
-#include "utilities.hpp"
-bool SoemInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
+#include "panasonicEthercatInitializer.hpp"
+
+bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
 {
     int ret = 0, l;
     uint8 num_pdo;
@@ -48,7 +48,7 @@ bool SoemInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
     printf("setup_minasa6b_pdo_mapping4 ret=%d\n", ret);
     return (ret > 0);
 }
-void SoemInitializer::print_state(){
+void PanasonicEthercatInitializer::print_state(){
     ec_readstate();
     printf("++state++\n");
     for (int i = 1; i <= ec_slavecount; i++) {  // 正確：從 1 開始
@@ -60,7 +60,7 @@ void SoemInitializer::print_state(){
     }
     printf("=====\n");
 }
-bool SoemInitializer::set_profile_motion_params(uint16 slave)
+bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave)
 {
     // 這些單位是 "internal position unit / s" 或 pulse/s
     // 先用大一點讓你肉眼看得出來動
@@ -77,7 +77,7 @@ bool SoemInitializer::set_profile_motion_params(uint16 slave)
            vel, acc, dec, ok ? "OK" : "FAIL");
     return ok;
 }
-bool SoemInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
+bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
 {
   (void)motor_count;
   (void)mode;
@@ -149,16 +149,16 @@ bool SoemInitializer::motor_initial_connect(const char* ifname, int motor_count,
   return true;
 }
 
-bool SoemInitializer::run_async()
+bool PanasonicEthercatInitializer::run_async()
 {
   if (!opened_) return false;
   running_ = true;
   return true;
 }
 
-void SoemInitializer::stop() { running_ = false; }
+void PanasonicEthercatInitializer::stop() { running_ = false; }
 
-void SoemInitializer::close()
+void PanasonicEthercatInitializer::close()
 {
   running_ = false;
   opened_ = false;

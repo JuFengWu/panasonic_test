@@ -1,7 +1,7 @@
 #include "motionSystem.hpp"
 #include "fakeInitializer.hpp"
 #include "fakeMotor.hpp"
-#include "soemInitializer.hpp"
+#include "panasonicEthercatInitializer.hpp"
 
 void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
 {
@@ -84,7 +84,7 @@ std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel 
     case FakeMotorType:
       return std::make_unique<FakeInitializer>();
     case PanasonicA6BMotorType:
-      return std::make_unique<SoemInitializer>();
+      return std::make_unique<PanasonicEthercatInitializer>();
     default:
       return nullptr;
   }

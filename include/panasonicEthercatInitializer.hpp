@@ -1,12 +1,14 @@
 #pragma once
 
 #include "motionInitializer.hpp"
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include "utilities.hpp"
+#include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
-class SoemInitializer : public IMotionInitializer {
+
+#include "utilities.hpp"
+
+class PanasonicEthercatInitializer : public IMotionInitializer {
  public:
   bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
   bool run_async() override;

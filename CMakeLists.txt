@@ -13,7 +13,7 @@ add_executable(test_pp_mode
     src/panasonicA6B.cpp
     src/fakeMotor.cpp
     src/motionSystem.cpp
-    src/soemInitializer.cpp
+    src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
 )
 target_include_directories(test_pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
