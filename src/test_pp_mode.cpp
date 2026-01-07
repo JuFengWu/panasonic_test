@@ -22,9 +22,9 @@ int main(){
   MotionSystem sys;
 
   // ✅ open: 內部完成掃描/config/map/SAFEOP SDO init（此時不啟動 cyclic thread）
-  if (!sys.start_connect(ifname, 2, PanasonicA6BMotorType, PP_Mode))
+  if (!sys.start_connect(ifname, 2, FakeMotorType, PP_Mode))
   {
-      printf("sys.open 失敗\n");
+      printf("sys.start_connect 失敗\n");
       return -1;
   }
 

@@ -1,10 +1,9 @@
 #include "fakeInitializer.hpp"
 
-bool FakeInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode)
+bool FakeInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
 {
   (void)ifname;
   (void)motor_count;
-  (void)model;
   (void)mode;
   opened_ = true;
   return true;

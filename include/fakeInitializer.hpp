@@ -4,7 +4,7 @@
 
 class FakeInitializer : public IMotionInitializer {
  public:
-  bool motor_initial_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode) override;
+  bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
   bool run_async() override;
   void stop() override;
   void close() override;

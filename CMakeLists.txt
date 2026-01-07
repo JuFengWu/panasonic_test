@@ -7,11 +7,6 @@ include_directories(${CMAKE_SOURCE_DIR}/osal)
 include_directories(${CMAKE_SOURCE_DIR}/osal/linux)
 include_directories(${CMAKE_SOURCE_DIR}/oshw/linux)
 
-# 加入你的程式碼
-add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)
-
-target_include_directories(pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
-
 add_executable(test_pp_mode
     src/test_pp_mode.cpp
     src/fakeInitializer.cpp
@@ -22,6 +17,12 @@ add_executable(test_pp_mode
     src/cyclicSession.cpp
 )
 target_include_directories(test_pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_pp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
+
+# 加入你的程式碼
+add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)
+
+target_include_directories(pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # 如果 libsoem.a 與 CMakeLists.txt 同資料夾：
 target_link_libraries(pp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)

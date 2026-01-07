@@ -51,7 +51,7 @@ bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel
   if (!initializer_) {
     return false;
   }
-  return initializer_->motor_initial_connect(ifname, motor_count, model, mode);
+  return initializer_->motor_initial_connect(ifname, motor_count, mode);
 }
 
 AllMotors& MotionSystem::motors() { return motors_; }
