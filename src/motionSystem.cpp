@@ -61,7 +61,7 @@ CyclicSession& MotionSystem::session() { return session_; }
 bool MotionSystem::run_async()
 {
   if (!initializer_) return false;
-  return initializer_->run_async();
+  return initializer_->run_async(session_, motors_);
 }
 
 void MotionSystem::stop()

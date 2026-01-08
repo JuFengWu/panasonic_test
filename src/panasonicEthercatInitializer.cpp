@@ -1,5 +1,8 @@
 #include "panasonicEthercatInitializer.hpp"
 
+#include <chrono>
+#include <functional>
+
 bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
 {
     int ret = 0, l;
@@ -149,17 +152,105 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   return true;
 }
 
-bool PanasonicEthercatInitializer::run_async()
+bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& motors)
 {
   if (!opened_) return false;
+  if (running_) return true;
+  if (worker_.joinable()) {
+    worker_.join();
+  }
   running_ = true;
+
+  // ====== 6. 主站要求 slave 進 OP ======
+  ec_slave[0].state = EC_STATE_OPERATIONAL;
+  ec_writestate(0);
+
+  // 等待 slave 真正進 OP
+  ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+  print_state();
+  
+  // 等待達到 OP
+  int chk = 40;
+  do
+  {
+      ec_send_processdata();
+      ec_receive_processdata(EC_TIMEOUTRET);
+      ec_statecheck(0, EC_STATE_OPERATIONAL, 50000);
+  } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
+
+  // ✅ 啟動 4ms PDO loop thread（避免 80.4 watchdog）
+  printf("啟動 4ms PDO loop thread...\n");
+
+  worker_ = std::thread(&PanasonicEthercatInitializer::run_loop, this, std::ref(session), std::ref(motors));
+  osal_usleep(1000000);  // 10ms
+
+  if (ec_slave[0].state != EC_STATE_OPERATIONAL)
+  {
+      printf("沒能成功進入 OP 狀態\n");
+      ec_close();
+      return false;
+  }
+
+  printf("所有從站已進入 OP 狀態\n");
   return true;
 }
 
-void PanasonicEthercatInitializer::stop() { running_ = false; }
+void PanasonicEthercatInitializer::stop()
+{
+  running_ = false;
+  if (worker_.joinable()) {
+    worker_.join();
+  }
+}
 
 void PanasonicEthercatInitializer::close()
 {
-  running_ = false;
+  stop();
   opened_ = false;
+}
+
+void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& motors)
+{
+  /*using clock = std::chrono::steady_clock;
+  auto next = clock::now();
+  while (running_) {
+    next += std::chrono::milliseconds(4);
+    ec_send_processdata();
+    ec_receive_processdata(EC_TIMEOUTRET);
+    bool break_loop = false;
+    session.run(motors, break_loop);
+    if (break_loop) {
+      running_ = false;
+      break;
+    }
+    std::this_thread::sleep_until(next);
+  }*/
+
+
+  const int cycle_ns = 4 * 1000 * 1000; // 4ms = 4,000,000 ns
+
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    while (running_)
+    {
+        // 下一個週期時間點
+        ts.tv_nsec += cycle_ns;
+        while (ts.tv_nsec >= 1000000000)
+        {
+            ts.tv_nsec -= 1000000000;
+            ts.tv_sec += 1;
+        }
+
+        ec_send_processdata();
+        ec_receive_processdata(EC_TIMEOUTRET);
+        bool break_loop = false;
+        session.run(motors, break_loop);
+        if (break_loop) {
+          running_ = false;
+          break;
+        }
+        // sleep 到下一個 tick（比 usleep 穩定）
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+    }
 }

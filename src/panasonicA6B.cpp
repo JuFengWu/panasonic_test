@@ -52,6 +52,16 @@ bool PanasonicA6B::setDec(int dec)
   return false;
 }
 
+bool PanasonicA6B::servo_on()
+{
+  return false;
+}
+
+bool PanasonicA6B::servo_off()
+{
+  return false;
+}
+
 int PanasonicA6B::get_error_code() { return 0; }
 
 int PanasonicA6B::get_current_position() { return 0; }

@@ -30,6 +30,8 @@ class Motor{
   virtual bool setVel(int vel)=0;
   virtual bool setAcc(int acc)=0;
   virtual bool setDec(int dec)=0;
+  virtual bool servo_on()=0;
+  virtual bool servo_off()=0;
   virtual int get_error_code()=0;
   virtual int get_current_position()=0;
   virtual int get_current_velocity()=0;

@@ -14,6 +14,8 @@ class PanasonicA6B : public Motor {
   bool setVel(int vel) override;
   bool setAcc(int acc) override;
   bool setDec(int dec) override;
+  bool servo_on() override;
+  bool servo_off() override;
   int get_error_code() override;
   int get_current_position() override;
   int get_current_velocity() override;

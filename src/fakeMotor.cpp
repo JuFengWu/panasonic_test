@@ -61,6 +61,16 @@ bool FakeMotor::setDec(int dec)
   return true;
 }
 
+bool FakeMotor::servo_on()
+{
+  return true;
+}
+
+bool FakeMotor::servo_off()
+{
+  return true;
+}
+
 int FakeMotor::get_error_code() { return error_code_; }
 
 int FakeMotor::get_current_position() { return current_position_; }
