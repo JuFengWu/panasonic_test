@@ -117,9 +117,8 @@ bool PanasonicA6B::set_target_position(float target)
 {
   (void)target;
   if (mode_ == PP_Mode){
-    move_absolute_pp_pdo(slave_, target);
+    return move_absolute_pp_pdo(slave_, target);
   }
-  return false;
 }
 
 bool PanasonicA6B::set_target_velocity(float target)

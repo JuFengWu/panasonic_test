@@ -3,6 +3,8 @@
 #include "fakeMotor.hpp"
 #include "panasonicEthercatInitializer.hpp"
 
+#include <stdexcept>
+
 void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
 {
   model_ = model;
@@ -16,15 +18,15 @@ void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
 
 Motor& AllMotors::motor(int id)
 {
+  if (motors_.empty()) {
+    throw std::runtime_error("AllMotors not initialized");
+  }
   if (id <= 0) {
-    id = 1;
+    throw std::out_of_range("Motor id must be >= 1");
   }
   size_t idx = static_cast<size_t>(id - 1);
   if (idx >= motors_.size()) {
-    motors_.reserve(idx + 1);
-    for (int i = static_cast<int>(motors_.size()) + 1; i <= id; ++i) {
-      motors_.push_back(create_motor(i));
-    }
+    throw std::out_of_range("Motor id exceeds initialized count");
   }
   return *motors_.at(idx);
 }

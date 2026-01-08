@@ -22,7 +22,7 @@ int main(){
   MotionSystem sys;
 
   // ✅ open: 內部完成掃描/config/map/SAFEOP SDO init（此時不啟動 cyclic thread）
-  if (!sys.start_connect(ifname, 2, FakeMotorType, PP_Mode))
+  if (!sys.start_connect(ifname, 1, FakeMotorType, PP_Mode))
   {
       printf("sys.start_connect 失敗\n");
       return -1;
@@ -33,7 +33,7 @@ int main(){
   auto& sess   = sys.session();
 
   Motor& m1 = motors.motor(1); 
-  Motor& m2 = motors.motor(2);
+  //Motor& m2 = motors.motor(2);
 
   printf("Motor count = %d\n", motors.count());
 
@@ -48,7 +48,7 @@ int main(){
       return -1;
   }
   m1.set_target_position(1000.0f);
-  m2.set_target_position(2000.0f);
+  //m2.set_target_position(2000.0f);
 
   // ✅ stop: 停 thread + 回 SAFEOP
   sys.stop();
