@@ -5,6 +5,7 @@
 #include "panasonicA6B.hpp"
 
 #include <memory>
+#include <atomic>
 #include <vector>
 
 class AllMotors {
@@ -42,4 +43,5 @@ class MotionSystem {
   MotorModes mode_ = PP_Mode;
   int motor_count_ = 0;
   std::unique_ptr<IMotionInitializer> initializer_;
+  std::atomic<bool> closing_{false};
 };

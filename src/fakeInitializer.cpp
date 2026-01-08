@@ -36,7 +36,7 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   return true;
 }
 
-void FakeInitializer::stop()
+void FakeInitializer::motor_stop()
 {
   running_ = false;
   if (worker_.joinable()) {
@@ -44,8 +44,8 @@ void FakeInitializer::stop()
   }
 }
 
-void FakeInitializer::close()
+void FakeInitializer::motor_close()
 {
-  stop();
+  motor_stop();
   opened_ = false;
 }

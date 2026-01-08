@@ -14,8 +14,8 @@ class PanasonicEthercatInitializer : public IMotionInitializer {
  public:
   bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
   bool run_async(CyclicSession& session, AllMotors& motors) override;
-  void stop() override;
-  void close() override;
+  void motor_stop() override;
+  void motor_close() override;
 
  private:
   void run_loop(CyclicSession& session, AllMotors& motors);
@@ -29,4 +29,6 @@ class PanasonicEthercatInitializer : public IMotionInitializer {
   void print_state();
   bool set_profile_motion_params(uint16 slave);
   void init_motion_params_pdo(uint16 slave, MotorModes mode);
+  bool shutdown_ecat(int pdo_cycle_us = 4000);
+  AllMotors* motors_ = nullptr;
 };

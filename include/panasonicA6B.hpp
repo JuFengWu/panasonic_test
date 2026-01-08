@@ -22,4 +22,6 @@ class PanasonicA6B : public Motor {
   int get_current_torque() override;
   MotorModes get_mode() override;
 
+private:
+  bool servoOffPDO_mapping4(uint16 slave);
 };

@@ -195,6 +195,7 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
     worker_.join();
   }
   running_ = true;
+  motors_ = &motors;
 
   // ====== 6. 主站要求 slave 進 OP ======
   ec_slave[0].state = EC_STATE_OPERATIONAL;
@@ -229,14 +230,72 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   printf("所有從站已進入 OP 狀態\n");
 
   for (int i = 1; i <= ec_slavecount; i++) {
-    auto motorMode = motors.motor(1).get_mode(); // 確保 mode 正確
+    auto motorMode = motors.motor(i).get_mode(); // 確保 mode 正確
     init_motion_params_pdo(i, motorMode);
   }
 
   return true;
 }
+bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
+{
+    bool ok = true;
 
-void PanasonicEthercatInitializer::stop()
+    printf("\n========== shutdown_ecat() ==========\n");
+
+    // 1) Servo OFF（若失敗也繼續往下做 SAFE_OP 避免 watchdog）
+    printf("[shutdown] Servo OFF...\n");
+
+    if (motors_) {
+      for (int i = 1; i <= ec_slavecount; i++) {
+        motors_->motor(i).servo_off();
+      }
+    }
+    printf("[shutdown] Servo OFF done\n");
+    
+
+    // 2) Servo OFF 後保持 PDO 交換 300ms
+    printf("[shutdown] Keep PDO exchange 300ms...\n");
+    usleep(300000);
+
+    // 3) 退回 SAFE_OP（最重要，避免 watchdog）
+    printf("[shutdown] Switch master to SAFE_OP...\n");
+    ec_slave[0].state = EC_STATE_SAFE_OP;
+    ec_writestate(0);
+
+    // 等待 master/slaves 真正進 SAFE_OP
+    if (ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE) != EC_STATE_SAFE_OP)
+    {
+        printf("[shutdown] WARNING: Not all slaves reached SAFE_OP\n");
+        ok = false;
+    }
+    else
+    {
+        printf("[shutdown] SAFE_OP reached\n");
+    }
+
+    // 4) 再送 200ms PDO（讓 transition 穩定）
+    printf("[shutdown] Keep PDO exchange 200ms...\n");
+    usleep(200000);
+
+    // 5) 停 PDO thread
+    printf("[shutdown] Stop PDO thread...\n");
+    running_ = false;
+
+    if (worker_.joinable()) {
+      worker_.join();
+       printf("[shutdown] PDO thread joined\n");
+    }
+
+    // 6) close EtherCAT
+    printf("[shutdown] ec_close()\n");
+    ec_close();
+
+    printf("[shutdown] Done. ok=%d\n", ok);
+    printf("=====================================\n\n");
+
+    return ok;
+}
+void PanasonicEthercatInitializer::motor_stop()
 {
   running_ = false;
   if (worker_.joinable()) {
@@ -244,10 +303,16 @@ void PanasonicEthercatInitializer::stop()
   }
 }
 
-void PanasonicEthercatInitializer::close()
+void PanasonicEthercatInitializer::motor_close()
 {
-  stop();
-  opened_ = false;
+  //motor_stop();
+  running_ = false;
+  shutdown_ecat();
+  motors_ = nullptr;
+  if (opened_) {
+    ec_close();
+    opened_ = false;
+  }
 }
 
 void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& motors)

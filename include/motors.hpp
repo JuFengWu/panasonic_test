@@ -1,4 +1,6 @@
 #pragma once
+#include <functional>
+#include <utility>
 typedef enum {
     PP_Mode,
     CSP_Mode,
@@ -22,6 +24,8 @@ struct MotionProfile {
 class Motor{
  public:
   Motor(int slave, MotorModes mode);
+  using FatalHandler = std::function<void()>;
+  void set_fatal_handler(FatalHandler handler) { fatal_handler_ = std::move(handler); }
   virtual bool set_mode(MotorModes mode)=0;
   virtual bool set_target_position(float)=0;
   virtual bool set_target_velocity(float)=0;
@@ -41,4 +45,8 @@ class Motor{
  protected:
   int slave_;
   MotorModes mode_;
+  void notify_fatal() { if (fatal_handler_) fatal_handler_(); }
+
+ private:
+  FatalHandler fatal_handler_;
 };
