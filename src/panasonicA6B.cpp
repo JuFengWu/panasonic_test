@@ -1,5 +1,4 @@
 ﻿#include "panasonicA6B.hpp"
-#include "utilities.hpp"
 #include <unistd.h>
 Motor::Motor(int slave, MotorModes mode) : slave_(slave), mode_(mode) {}
 
@@ -52,7 +51,7 @@ bool PanasonicA6B::setDec(int dec)
   (void)dec;
   return false;
 }
-static void dump_pdo(uint16 slave)
+void PanasonicA6B::dump_pdo(uint16 slave)
 {
   printf("==== PDO DUMP slave %d ====\n", slave);
 
@@ -68,16 +67,7 @@ static void dump_pdo(uint16 slave)
   printf("==========================\n");
 }
 
-typedef enum {
-    SWITCH_DISABLED,
-    READY_SWITCH,
-    SWITCHED_ON,
-    OP_ENABLED,
-    FAULT,
-    UNKNOWN_PDS_STATE
-} PDSState;
-
-static PDSState getPDS(uint16 sw)
+PanasonicA6B::PDSState PanasonicA6B::getPDS(uint16 sw)
 {
     if ((sw & 0x004F) == 0x0040) return SWITCH_DISABLED;
     if ((sw & 0x006F) == 0x0021) return READY_SWITCH;
@@ -87,7 +77,7 @@ static PDSState getPDS(uint16 sw)
     return UNKNOWN_PDS_STATE;
 }
 
-static bool servoOnPDO_mapping4(uint16 slave)
+bool PanasonicA6B::servoOnPDO_mapping4(uint16 slave)
 {
     uint8 *out = (uint8*)ec_slave[slave].outputs; // 25 bytes
     uint8 *in  = (uint8*)ec_slave[slave].inputs;  // 25 bytes
@@ -194,13 +184,12 @@ bool PanasonicA6B::servoOffPDO_mapping4(uint16 slave)
             uint16 err = get_u16(in, 0); // 603F error code
             printf("[servoOff] sw=0x%04X st=%d cw=0x%04X err=0x%04X\n",
                    sw, st, cw, err);
-        }
+        } //TODO?  retun false if too long??
     }
 }
 bool PanasonicA6B::servo_off()
 {
-  servoOffPDO_mapping4(slave_);
-  return false;
+  return servoOffPDO_mapping4(slave_);
 }
 
 int PanasonicA6B::get_error_code() { return 0; }

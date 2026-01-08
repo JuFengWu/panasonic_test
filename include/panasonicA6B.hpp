@@ -1,6 +1,7 @@
 #pragma once
 
 #include "motors.hpp"
+#include "utilities.hpp"
 
 class PanasonicA6B : public Motor {
  public:
@@ -20,8 +21,20 @@ class PanasonicA6B : public Motor {
   int get_current_position() override;
   int get_current_velocity() override;
   int get_current_torque() override;
-  MotorModes get_mode() override;
+ MotorModes get_mode() override;
 
 private:
+  typedef enum {
+    SWITCH_DISABLED,
+    READY_SWITCH,
+    SWITCHED_ON,
+    OP_ENABLED,
+    FAULT,
+    UNKNOWN_PDS_STATE
+  } PDSState;
+
+  void dump_pdo(uint16 slave);
+  PDSState getPDS(uint16 sw);
+  bool servoOnPDO_mapping4(uint16 slave);
   bool servoOffPDO_mapping4(uint16 slave);
 };
