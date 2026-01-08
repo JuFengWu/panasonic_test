@@ -10,10 +10,115 @@ bool PanasonicA6B::set_mode(MotorModes mode)
   mode_ = mode;
   return true;
 }
+// 假設：電子齒輪設定為 1，且「1 指令單位 = 1 度」。
+int32 PanasonicA6B::deg_to_command(double deg)
+{
+    return (int32)(deg / 360.0 * kCountsPerRev);
+}
+bool PanasonicA6B::move_absolute_pp_pdo(uint16 slave, double target_deg)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+    uint8 *in  = (uint8*)ec_slave[slave].inputs;
 
+    int32 target_cmd = deg_to_command(target_deg);
+
+    printf("=== Before move ===\n");
+    //dump_pdo(slave);
+
+    // 0) 等 bit10 先變 0（確保下一次會重新變 1）
+    int t = 0;
+    while (t < 1000)
+    {
+        uint16 sw = get_u16(in, 2);
+        if (!(sw & (1 << 10))) break;
+        usleep(1000);
+        t += 1;
+    }
+
+    // 1) 寫 target position (你目前用 offset=7)
+    set_i32(out, 7, target_cmd);
+
+    // 2) 控制字準備
+    uint16 cw = get_u16(out, 0);
+    cw |= 0x000F;          // enable
+    cw &= ~(1 << 6);       // absolute
+
+    // 先清 bit4
+    cw &= ~(1 << 4);
+    set_u16(out, 0, cw);
+    usleep(2000);
+
+    // 再 set bit4
+    cw |= (1 << 4);
+    set_u16(out, 0, cw);
+
+    // 3) 等 bit12 ack = 1
+    t = 0;
+    while (t < 2000)
+    {
+        uint16 sw = get_u16(in, 2);
+        if (sw & (1 << 12)) break;
+        usleep(1000);
+        t += 1;
+    }
+
+    // 4) 等 bit10 reached = 1 + debug current position
+    int timeout_ms = 5000;
+    int elapsed = 0;
+    int next_print = 0;
+
+    while (elapsed < timeout_ms)
+    {
+        uint16 sw = get_u16(in, 2);
+        int32 act = get_i32(in, 5);   // 先用 5，但我們用 dump 來確認
+
+        if (elapsed >= next_print)
+        {
+            printf("[move dbg] t=%4dms sw=0x%04X act=%d target=%d diff=%d\n",
+                   elapsed, sw, act, target_cmd, target_cmd - act);
+            next_print += 100;
+        }
+
+        if (sw & (1 << 10))
+        {
+            printf("[move] reached target=%.2f deg cmd=%d sw=0x%04X act=%d diff=%d\n",
+                   target_deg, target_cmd, sw, act, target_cmd - act);
+
+            printf("=== After reached ===\n");
+            dump_pdo(slave);
+
+            // 清 bit4（讓下次 move toggle 有效）
+            cw &= ~(1 << 4);
+            set_u16(out, 0, cw);
+
+            return true;
+        }
+
+        usleep(10000);
+        elapsed += 10;
+    }
+
+    uint16 sw = get_u16(in, 2);
+    int32 act = get_i32(in, 5);
+
+    printf("[move] timeout! target=%.2f cmd=%d sw=0x%04X act=%d diff=%d\n",
+           target_deg, target_cmd, sw, act, target_cmd - act);
+
+    printf("=== After timeout ===\n");
+    dump_pdo(slave);
+
+    // 清 bit4
+    cw &= ~(1 << 4);
+    set_u16(out, 0, cw);
+
+    return false;
+}
 bool PanasonicA6B::set_target_position(float target)
 {
   (void)target;
+  if (mode_ == PP_Mode){
+    move_absolute_pp_pdo(slave_, target);
+  }
   return false;
 }
 

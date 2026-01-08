@@ -35,6 +35,9 @@ private:
 
   void dump_pdo(uint16 slave);
   PDSState getPDS(uint16 sw);
+  static constexpr double kCountsPerRev = 0x800000;
+  int32 deg_to_command(double deg);
+  bool move_absolute_pp_pdo(uint16 slave, double target_deg);
   bool servoOnPDO_mapping4(uint16 slave);
   bool servoOffPDO_mapping4(uint16 slave);
 };
