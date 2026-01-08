@@ -51,7 +51,7 @@ int main(){
   //m2.set_target_position(2000.0f);
 
   // ✅ stop: 停 thread + 回 SAFEOP
-  sys.stop();
+  //sys.stop();
 
   // ✅ close: ec_close + 清理資源
   sys.close();
