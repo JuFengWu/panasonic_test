@@ -1,7 +1,9 @@
 #include "panasonicEthercatInitializer.hpp"
+#include "motionSystem.hpp"
 
 #include <chrono>
 #include <functional>
+
 
 bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
 {
@@ -151,6 +153,39 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
 
   return true;
 }
+void PanasonicEthercatInitializer::init_motion_params_pdo(uint16 slave, MotorModes mode)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+
+    // mode = PP
+    if (mode == PP_Mode){
+      out[2] = 1;  // PP mode
+    } else if (mode == CSV_Mode) {
+      out[2] = 9;  // CSV mode
+    } else if (mode == CST_Mode) {
+      out[2] = 10;  // CST mode
+    } else if (mode == CSP_Mode){
+      out[2] = 8;  // CSP mode
+    } else{
+      out[2] = 1;  // PP mode
+    }
+    
+    // 6071 target torque = 0 (PP 不用)
+    set_u16(out, 3, 0);
+
+    // 6072 max torque (unit: 0.1% or 1% 視驅動器)
+    // 先給 1000 (常見代表 100%)
+    set_u16(out, 5, 1000);
+
+    // 6080 max motor speed (你原本程式用 0x16000000)
+    set_i32(out, 11, 0x16000000);
+
+    // 60B8 touch probe function = 0
+    set_u16(out, 15, 0);
+
+    // 60FF target velocity = 0 (PP 不用)
+    set_i32(out, 17, 0);
+}
 
 bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& motors)
 {
@@ -192,6 +227,12 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   }
 
   printf("所有從站已進入 OP 狀態\n");
+
+  for (int i = 1; i <= ec_slavecount; i++) {
+    auto motorMode = motors.motor(1).get_mode(); // 確保 mode 正確
+    init_motion_params_pdo(i, motorMode);
+  }
+
   return true;
 }
 

@@ -20,5 +20,6 @@ class PanasonicA6B : public Motor {
   int get_current_position() override;
   int get_current_velocity() override;
   int get_current_torque() override;
+  MotorModes get_mode() override;
 
 };

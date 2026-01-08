@@ -78,3 +78,5 @@ int FakeMotor::get_current_position() { return current_position_; }
 int FakeMotor::get_current_velocity() { return current_velocity_; }
 
 int FakeMotor::get_current_torque() { return current_torque_; }
+
+MotorModes FakeMotor::get_mode() { return mode_; }

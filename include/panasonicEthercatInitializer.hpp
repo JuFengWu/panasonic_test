@@ -28,4 +28,5 @@ class PanasonicEthercatInitializer : public IMotionInitializer {
   bool setup_minasa6b_pdo_mapping4(uint16 slave);
   void print_state();
   bool set_profile_motion_params(uint16 slave);
+  void init_motion_params_pdo(uint16 slave, MotorModes mode);
 };

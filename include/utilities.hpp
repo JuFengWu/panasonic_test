@@ -81,3 +81,25 @@ inline bool sdo_read_u32(uint16 slave, uint16 index, uint8 sub, uint32 *out)
     *out = val;
     return true;
 }
+
+
+static inline uint16 get_u16(uint8 *p, int off)
+{
+    return (uint16)(p[off] | (p[off + 1] << 8));
+}
+static inline void set_u16(uint8 *p, int off, uint16 v)
+{
+    p[off] = (uint8)(v & 0xFF);
+    p[off + 1] = (uint8)((v >> 8) & 0xFF);
+}
+static inline int32 get_i32(uint8 *p, int off)
+{
+    return (int32)(p[off] | (p[off+1]<<8) | (p[off+2]<<16) | (p[off+3]<<24));
+}
+static inline void set_i32(uint8 *p, int off, int32 v)
+{
+    p[off]   = (uint8)(v & 0xFF);
+    p[off+1] = (uint8)((v >> 8) & 0xFF);
+    p[off+2] = (uint8)((v >> 16) & 0xFF);
+    p[off+3] = (uint8)((v >> 24) & 0xFF);
+}

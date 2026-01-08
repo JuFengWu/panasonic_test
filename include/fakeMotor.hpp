@@ -20,6 +20,7 @@ class FakeMotor : public Motor {
   int get_current_position() override;
   int get_current_velocity() override;
   int get_current_torque() override;
+  MotorModes get_mode() override;
 
  private:
   int current_position_;

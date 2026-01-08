@@ -69,3 +69,5 @@ int PanasonicA6B::get_current_position() { return 0; }
 int PanasonicA6B::get_current_velocity() { return 0; }
 
 int PanasonicA6B::get_current_torque() { return 0; }
+
+MotorModes PanasonicA6B::get_mode() { return mode_; }
