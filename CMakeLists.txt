@@ -7,8 +7,8 @@ include_directories(${CMAKE_SOURCE_DIR}/osal)
 include_directories(${CMAKE_SOURCE_DIR}/osal/linux)
 include_directories(${CMAKE_SOURCE_DIR}/oshw/linux)
 
-add_executable(test_pp_mode
-    src/test_pp_mode.cpp
+add_executable(test_run
+    src/test_run.cpp
     src/fakeInitializer.cpp
     src/panasonicA6B.cpp
     src/fakeMotor.cpp
@@ -16,8 +16,8 @@ add_executable(test_pp_mode
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
 )
-target_include_directories(test_pp_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(test_pp_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
+target_include_directories(test_run PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_run ${CMAKE_SOURCE_DIR}/libsoem.a)
 
 # 加入你的程式碼
 add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)

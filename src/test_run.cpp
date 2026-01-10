@@ -1,6 +1,7 @@
-#include "motionSystem.hpp"
+﻿#include "motionSystem.hpp"
 #include <iostream>
 #include <memory>
+#include <unistd.h>
 
 static void on_cycle(AllMotors& motors, bool& break_loop) {
 
@@ -11,7 +12,7 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
   (void)break_loop;
 }
 
-void run_pp_mode_test(Motor m1){
+static bool run_pp_mode_test(Motor& m1){
   double posA = 0.0;
     double posB = 30.0;
 
@@ -37,6 +38,18 @@ void run_pp_mode_test(Motor m1){
     }
 
     printf("=== Move test done ===\n");
+    return true;
+}
+
+static bool run_mode_test(MotorModes mode, Motor& m1)
+{
+  switch (mode) {
+    case PP_Mode:
+      return run_pp_mode_test(m1);
+    default:
+      printf("Mode test not implemented yet.\n");
+      return false;
+  }
 }
 int main(){
 
@@ -47,11 +60,11 @@ int main(){
   printf("使用介面卡: %s\n", ifname);
 
   MotionSystem sys;
+  constexpr MotorModes kMode = PP_Mode;
 
-  // ✅ open: 內部完成掃描/config/map/SAFEOP SDO init（此時不啟動 cyclic thread）
-  if (!sys.start_connect(ifname, 1, FakeMotorType, PP_Mode))
+  if (!sys.start_connect(ifname, 1, FakeMotorType, kMode))
   {
-      printf("sys.start_connect 失敗\n");
+      printf("sys.start_connect failed\n");
       return -1;
   }
 
@@ -74,7 +87,7 @@ int main(){
       sys.close();
       return -1;
   }
-  run_pp_mode_test(m1);
+  run_mode_test(kMode, m1);
   //m1.set_target_position(1000.0f);
   //m2.set_target_position(2000.0f);
 
