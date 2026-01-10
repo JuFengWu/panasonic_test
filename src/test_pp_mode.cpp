@@ -11,6 +11,33 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
   (void)break_loop;
 }
 
+void run_pp_mode_test(Motor m1){
+  double posA = 0.0;
+    double posB = 30.0;
+
+    for (int i = 0; i < 5; i++)
+    {
+        printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posB);
+        if (!m1.set_target_position(posB))
+        {
+            printf("Move to %.1f deg failed\n", posB);
+            break;
+        }
+
+        usleep(200000); // 200ms 停一下
+
+        printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posA);
+        if (!m1.set_target_position(posA))
+        {
+            printf("Move to %.1f deg failed\n", posA);
+            break;
+        }
+
+        usleep(200000);
+    }
+
+    printf("=== Move test done ===\n");
+}
 int main(){
 
   const char* ifname;
@@ -47,7 +74,8 @@ int main(){
       sys.close();
       return -1;
   }
-  m1.set_target_position(1000.0f);
+  run_pp_mode_test(m1);
+  //m1.set_target_position(1000.0f);
   //m2.set_target_position(2000.0f);
 
   // ✅ stop: 停 thread + 回 SAFEOP

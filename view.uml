@@ -1,0 +1,33 @@
+﻿@startuml
+
+skinparam classAttributeIconSize 0
+hide empty fields
+hide empty methods
+
+class MotionProfile
+class Motor
+class PanasonicA6B
+class FakeMotor
+class IMotionInitializer
+class PanasonicEthercatInitializer
+class FakeInitializer
+class AllMotors
+class MotionSystem
+class CyclicSession
+
+Motor <|-- PanasonicA6B
+Motor <|-- FakeMotor
+IMotionInitializer <|-- PanasonicEthercatInitializer
+IMotionInitializer <|-- FakeInitializer
+
+MotionSystem *-- AllMotors
+MotionSystem *-- CyclicSession
+MotionSystem *-- IMotionInitializer
+AllMotors o-- Motor
+CyclicSession ..> AllMotors
+IMotionInitializer ..> AllMotors
+IMotionInitializer ..> CyclicSession
+
+Motor ..> MotionProfile
+
+@enduml

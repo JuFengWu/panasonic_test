@@ -41,3 +41,25 @@ private:
   bool servoOnPDO_mapping4(uint16 slave);
   bool servoOffPDO_mapping4(uint16 slave);
 };
+/*
+    SET PDO maping 4   
+			Index	  Size(bit)	Name
+    RxPDO (1603h)	6040h 00h 16 Controlword
+			6060h 00h  8 Modes of operation
+			6071h 00h 16 Target Torque
+			6072h 00h 16 Max torque
+			607Ah 00h 32 Target Position
+			6080h 00h 32 Max motor speed
+			60B8h 00h 16 Touch probe function
+			60FFh 00h 32 Target Velocity
+    TxPDO (1A03h)
+			603Fh 00h 16 Error code
+			6041h 00h 16 Statusword
+			6061h 00h  8 Modes of operation display
+			6064h 00h 32 Position actual value
+			606Ch 00h 32 Velocity actual value
+			6077h 00h 16 Torque actual value
+			60B9h 00h 16 Touch probe status
+			60BAh 00h 32 Touch probe pos1 pos val
+			60FDh 00h 32 Digital inputs
+   */
