@@ -38,7 +38,7 @@ private:
   static constexpr double kCountsPerRev = 0x800000;
   int32 deg_to_command(double deg);
   bool move_absolute_pp_pdo(uint16 slave, double target_deg);
-  void csp_set_target_position(uint16 slave, int32 target_cmd);
+  void csp_set_target_position(uint16 slave, float target_degree);
   bool servoOnPDO_mapping4(uint16 slave);
   bool servoOffPDO_mapping4(uint16 slave);
 };

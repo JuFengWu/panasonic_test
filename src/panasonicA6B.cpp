@@ -113,24 +113,24 @@ bool PanasonicA6B::move_absolute_pp_pdo(uint16 slave, double target_deg)
 
     return false;
 }
-void PanasonicA6B::csp_set_target_position(uint16 slave, int32 target_cmd)
+void PanasonicA6B::csp_set_target_position(uint16 slave, float target_degree)
 {
-    uint8 *out = (uint8*)ec_slave[slave].outputs;
+  int32 target_cmd = deg_to_command(target_degree);
+  uint8 *out = (uint8*)ec_slave[slave].outputs;
 
-    // CSP: 只要一直更新 607A (offset=7)
-    set_i32(out, 7, target_cmd);
+  // CSP: 只要一直更新 607A (offset=7)
+  set_i32(out, 7, target_cmd);
 }
 bool PanasonicA6B::set_target_position(float target)
 {
   (void)target;
   if (mode_ == PP_Mode){
     return move_absolute_pp_pdo(slave_, target);
-  } else if (mode_ == CSP_Mode)
-  {
+  } else if (mode_ == CSP_Mode) {
     csp_set_target_position(slave_, target);
     return true;
   }
-  
+  return false;
 }
 
 bool PanasonicA6B::set_target_velocity(float target)

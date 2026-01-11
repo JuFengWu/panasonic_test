@@ -44,8 +44,8 @@ static bool run_csp_mode_test(Motor& m1){
   float posA_deg = 0.0f;
   float posB_deg = 30.0f;
   int cycles = 5;
-  int32 posA = deg_to_command(posA_deg);
-  int32 posB = deg_to_command(posB_deg);
+  float posA = posA_deg;
+  float posB = posB_deg;
 
   // 每 4ms 更新一次（配合你的 PDO thread 週期）
   const int dt_us = 4000;
@@ -53,15 +53,15 @@ static bool run_csp_mode_test(Motor& m1){
   // 用一個合理速度，例如 30 度要 2 秒到達
   // step = 每週期增加的 command
   int total_steps = 2000.0 / 4.0;  // 2秒 / 4ms = 500 steps
-  int32 step = (posB - posA) / total_steps;
-  if(step == 0) step = (posB > posA) ? 1 : -1;
+  float step = (posB - posA) / total_steps;
+  if(step == 0.0f) step = (posB > posA) ? 0.01f : -0.01f;
 
   for (int c = 0; c < cycles; c++)
   {
     printf("==== CSP Cycle %d: A -> B ====\n", c+1);
 
     // A -> B
-    int32 cmd = posA;
+    float cmd = posA;
     while ((step > 0 && cmd < posB) || (step < 0 && cmd > posB))
     {
       m1.set_target_position(cmd);
