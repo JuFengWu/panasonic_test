@@ -43,18 +43,6 @@ void dump_pdo(uint16 slave)
     printf("\n");
     printf("==========================\n");
 }
-
-
-static inline void set_i16(uint8 *p, int off, int16 v)
-{
-    p[off]   = (uint8)(v & 0xFF);
-    p[off+1] = (uint8)((v >> 8) & 0xFF);
-}
-static inline int16 get_i16(uint8 *p, int off)
-{
-    return (int16)(p[off] | (p[off+1] << 8));
-}
-
 typedef enum {
     SWITCH_DISABLED,
     READY_SWITCH,

@@ -124,6 +124,40 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles)
   // 最後確保停止
   m1.set_target_velocity(0);
 }
+void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles)
+{
+    const int dt_us = 4000;          // 4ms
+    const int run_ms = 2000;         // 每次跑 2 秒
+    const int steps = run_ms / 4;    // 2s / 4ms = 500 次更新
+
+    for (int c = 0; c < cycles; c++)
+    {
+        printf("=== CST Cycle %d: +Torque %d for %dms ===\n", c+1, tq_cmd, run_ms);
+        for (int i = 0; i < steps; i++)
+        {
+            m1.set_target_torque(tq_cmd);
+            usleep(dt_us);
+        }
+
+        // torque = 0
+        m1.set_target_torque(0);
+        usleep(200000);
+
+        printf("=== CST Cycle %d: -Torque %d for %dms ===\n", c+1, tq_cmd, run_ms);
+        for (int i = 0; i < steps; i++)
+        {
+            m1.set_target_torque(-tq_cmd);
+            usleep(dt_us);
+        }
+
+        // torque = 0
+        m1.set_target_torque(0);
+        usleep(200000);
+    }
+
+    // 最後一定要歸 0 扭矩
+    m1.set_target_torque(0);
+}
 static bool run_mode_test(MotorModes mode, Motor& m1)
 {
   switch (mode) {
@@ -135,6 +169,7 @@ static bool run_mode_test(MotorModes mode, Motor& m1)
       csv_velocity_test(m1, 500000, 5);
       return true;
     case CST_Mode:
+    cst_torque_test(m1, 10, 5);
     default:
       printf("Mode test not implemented yet.\n");
       return false;

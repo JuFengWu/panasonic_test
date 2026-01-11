@@ -24,12 +24,36 @@ void PanasonicA6B::init_csv_mode(uint16 slave)
   // Controlword = 0x000F (Enable operation)
   set_u16(out, 0, 0x000F);
 }
+void PanasonicA6B::init_cst_mode(uint16 slave)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+
+    // 6060 operation mode = 10 (CST)
+    out[2] = 10;
+
+    // 6072 max torque (先設定大一點)
+    // 你前面用 1000 OK（多數 Panasonic 是 0.1% 或 1% 的單位）
+    set_u16(out, 5, 1000);
+
+    // 6071 target torque 初始 = 0
+    set_i16(out, 3, 0);
+
+    // 6080 max motor speed（強烈建議設，不然 torque mode 會無限制加速）
+    set_i32(out, 11, 0x16000000);
+
+    // controlword = 0x000F 保持 enable
+    set_u16(out, 0, 0x000F);
+}
 bool PanasonicA6B::set_mode(MotorModes mode)
 {
   mode_ = mode;
   if (mode_ == CSV_Mode){
     init_csv_mode(slave_);
+  } else if (mode_ == CST_Mode)
+  {
+    init_cst_mode(slave_);
   }
+  
   return true;
 }
 // 假設：電子齒輪設定為 1，且「1 指令單位 = 1 度」。
@@ -159,16 +183,20 @@ void PanasonicA6B::csv_set_target_velocity(uint16 slave, int32 vel_cmd)
     uint8 *out = (uint8*)ec_slave[slave].outputs;
     set_i32(out, 17, vel_cmd);   // 60FF offset=17
 }
+static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+    set_i16(out, 3, tq_cmd);      // 6071 offset=3
+}
 bool PanasonicA6B::set_target_velocity(float target)
 {
-  
   csv_set_target_velocity(slave_, deg_to_command(target));
   return true;
 }
 
 bool PanasonicA6B::set_target_torque(float target)
 {
-  (void)target;
+  cst_set_target_torque(slave_, (int16)(target/10)); //panasonic 6071 單位是 0.1Nm
   return false;
 }
 

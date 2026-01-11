@@ -39,6 +39,7 @@ private:
   int32 deg_to_command(double deg);
   bool move_absolute_pp_pdo(uint16 slave, double target_deg);
   void init_csv_mode(uint16 slave);
+  void init_cst_mode(uint16 slave);
   void csv_set_target_velocity(uint16 slave, int32 vel_cmd);
   void csp_set_target_position(uint16 slave, float target_degree);
   bool servoOnPDO_mapping4(uint16 slave);
