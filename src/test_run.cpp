@@ -4,18 +4,18 @@
 #include <unistd.h>
 
 static void on_cycle(AllMotors& motors, bool& break_loop) {
-  auto currentPosition = motors.motor(1).get_current_position();
-  std::cout << "Current Position: " << currentPosition << std::endl;
-  auto errorState = motors.motor(1).get_error_code();
-  std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
-  (void)break_loop;
+  //auto currentPosition = motors.motor(1).get_current_position();
+  //std::cout << "Current Position: " << currentPosition << std::endl;
+  //auto errorState = motors.motor(1).get_error_code();
+  //std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
+  //(void)break_loop;
 }
 
 static bool run_pp_mode_test(Motor& m1) {
   double posA = 0.0;
   double posB = 30.0;
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 2; i++) {
     printf("---- Cycle %d: move to %.1f deg ----\n", i + 1, posB);
     if (!m1.set_target_position(posB)) {
       printf("Move to %.1f deg failed\n", posB);
@@ -177,7 +177,7 @@ int main() {
   MotionSystem sys;
   constexpr MotorModes kMode = PP_Mode;
 
-  if (!sys.start_connect(ifname, 1, FakeMotorType, kMode)) {
+  if (!sys.start_connect(ifname, 1, PanasonicA6MotorType, kMode)) {
     printf("sys.start_connect failed\n");
     return -1;
   }
@@ -200,7 +200,12 @@ int main() {
     sys.close();
     return -1;
   }
+  m1.servo_on();
+  printf("start servo on!\n");
   run_mode_test(kMode, m1);
+  printf("start do servo off!");
+  m1.servo_off();
+  printf("do servo off!");
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);
 

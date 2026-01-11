@@ -281,7 +281,7 @@ bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
 
     if (worker_.joinable()) {
       worker_.join();
-       printf("[shutdown] PDO thread joined\n");
+      printf("[shutdown] PDO thread joined\n");
     }
 
     // 6) close EtherCAT
@@ -304,8 +304,9 @@ void PanasonicEthercatInitializer::motor_stop()
 void PanasonicEthercatInitializer::motor_close()
 {
   //motor_stop();
-  running_ = false;
+  
   shutdown_ecat();
+  running_ = false;
   motors_ = nullptr;
   if (opened_) {
     ec_close();

@@ -330,7 +330,7 @@ bool PanasonicA6::servoOffPDO_mapping4(uint16 slave) {
     uint16 sw = get_u16(in, 2); // statusword offset=2
     PDSState st = getPDS(sw);
 
-    // ? 目標：回到 Switch Disabled
+    // 目標：回到 Switch Disabled
     if (st == SWITCH_DISABLED) {
       printf("[servoOff] SWITCH_DISABLED sw=0x%04X\n", sw);
       return true;
