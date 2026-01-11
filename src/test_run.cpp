@@ -88,14 +88,53 @@ static bool run_csp_mode_test(Motor& m1){
   }
   return true;
 }
+void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles)
+{
+  const int dt_us = 4000;         // 4ms
+  const int run_ms = 2000;        // 每次跑 2 秒
+  const int steps = run_ms / 4;   // 2秒 / 4ms = 500 steps
 
+  for (int c = 0; c < cycles; c++)
+  {
+    printf("=== CSV Cycle %d: +vel %d for %dms ===\n", c+1, vel_cmd, run_ms);
+
+    for (int i = 0; i < steps; i++)
+    {
+      m1.set_target_velocity(vel_cmd);
+      usleep(dt_us);
+    }
+
+    // 停下來
+    m1.set_target_velocity(0);
+    usleep(200000);
+
+    printf("=== CSV Cycle %d: -vel %d for %dms ===\n", c+1, vel_cmd, run_ms);
+
+    for (int i = 0; i < steps; i++)
+    {
+      m1.set_target_velocity(-vel_cmd);
+      usleep(dt_us);
+    }
+
+    // 停下來
+    m1.set_target_velocity(0);
+    usleep(200000);
+  }
+
+  // 最後確保停止
+  m1.set_target_velocity(0);
+}
 static bool run_mode_test(MotorModes mode, Motor& m1)
 {
   switch (mode) {
     case PP_Mode:
       return run_pp_mode_test(m1);
     case CSP_Mode:
-      return run_csp_mode_test(m1);;
+      return run_csp_mode_test(m1);
+    case CSV_Mode:
+      csv_velocity_test(m1, 500000, 5);
+      return true;
+    case CST_Mode:
     default:
       printf("Mode test not implemented yet.\n");
       return false;

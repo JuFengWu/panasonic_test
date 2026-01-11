@@ -65,7 +65,7 @@ void PanasonicEthercatInitializer::print_state(){
     }
     printf("=====\n");
 }
-bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave)
+bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave) // TODO: let user set these values
 {
     // 這些單位是 "internal position unit / s" 或 pulse/s
     // 先用大一點讓你肉眼看得出來動
@@ -74,9 +74,9 @@ bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave)
     uint32 dec = 0x80000000;
 
     bool ok = true;
-    ok &= sdo_write_u32(slave, 0x6081, 0x00, vel);
-    ok &= sdo_write_u32(slave, 0x6083, 0x00, acc);
-    ok &= sdo_write_u32(slave, 0x6084, 0x00, dec);
+    ok &= sdo_write_u32(slave, 0x6081, 0x00, vel); //Profile velocity
+    ok &= sdo_write_u32(slave, 0x6083, 0x00, acc); //Profile acceleration
+    ok &= sdo_write_u32(slave, 0x6084, 0x00, dec); //Profile deceleration
 
     printf("Set 6081 vel=%u 6083 acc=%u 6084 dec=%u (%s)\n",
            vel, acc, dec, ok ? "OK" : "FAIL");
@@ -84,8 +84,6 @@ bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave)
 }
 bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
 {
-  (void)motor_count;
-  (void)mode;
   opened_ = true;
   initialized_ = true;
 

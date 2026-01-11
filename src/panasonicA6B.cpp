@@ -5,9 +5,31 @@ Motor::Motor(int slave, MotorModes mode) : slave_(slave), mode_(mode) {}
 PanasonicA6B::PanasonicA6B(int slave, MotorModes mode)
     : Motor(slave, mode) {}
 
+void PanasonicA6B::init_csv_mode(uint16 slave)
+{
+  uint8 *out = (uint8*)ec_slave[slave].outputs;
+
+  // 6060 Mode = 9 (CSV)
+  out[2] = 9;
+
+  // Max torque (6072) 設大，避免出力被限制
+  set_u16(out, 5, 1000);        // 100% (你之前用 1000 OK)
+
+  // Max motor speed (6080) 設合理（你之前用 0x16000000 OK）
+  set_i32(out, 11, 0x16000000);
+
+  // Target velocity = 0
+  set_i32(out, 17, 0);
+
+  // Controlword = 0x000F (Enable operation)
+  set_u16(out, 0, 0x000F);
+}
 bool PanasonicA6B::set_mode(MotorModes mode)
 {
   mode_ = mode;
+  if (mode_ == CSV_Mode){
+    init_csv_mode(slave_);
+  }
   return true;
 }
 // 假設：電子齒輪設定為 1，且「1 指令單位 = 1 度」。
@@ -132,11 +154,16 @@ bool PanasonicA6B::set_target_position(float target)
   }
   return false;
 }
-
+void PanasonicA6B::csv_set_target_velocity(uint16 slave, int32 vel_cmd)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+    set_i32(out, 17, vel_cmd);   // 60FF offset=17
+}
 bool PanasonicA6B::set_target_velocity(float target)
 {
-  (void)target;
-  return false;
+  
+  csv_set_target_velocity(slave_, deg_to_command(target));
+  return true;
 }
 
 bool PanasonicA6B::set_target_torque(float target)

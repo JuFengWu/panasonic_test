@@ -65,7 +65,12 @@ bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel
   for (int i = 1; i <= motor_count_; ++i) {
     motors_.motor(i).set_fatal_handler(fatal_handler);
   }
-  return initializer_->motor_initial_connect(ifname, motor_count, mode);
+  bool isInitialOK = initializer_->motor_initial_connect(ifname, motor_count, mode);
+
+  for (int i = 1; i <= motor_count_; ++i) {
+    motors_.motor(i).set_mode(mode);
+  }
+  return isInitialOK;
 }
 
 AllMotors& MotionSystem::motors() { return motors_; }
