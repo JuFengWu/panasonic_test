@@ -1,4 +1,4 @@
-#include "motionSystem.hpp"
+﻿#include "motionSystem.hpp"
 #include "fakeInitializer.hpp"
 #include "fakeMotor.hpp"
 #include "panasonicEthercatInitializer.hpp"
@@ -33,8 +33,8 @@ int AllMotors::count() const { return static_cast<int>(motors_.size()); }
 
 std::unique_ptr<Motor> AllMotors::create_motor(int id) {
   switch (model_) {
-    case PanasonicA6BMotorType:
-      return std::make_unique<PanasonicA6B>(id, mode_);
+    case PanasonicA6MotorType:
+      return std::make_unique<PanasonicA6>(id, mode_);
     default:
       return std::make_unique<FakeMotor>(id, mode_);
   }
@@ -97,9 +97,11 @@ std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel 
   switch (model) {
     case FakeMotorType:
       return std::make_unique<FakeInitializer>();
-    case PanasonicA6BMotorType:
+    case PanasonicA6MotorType:
       return std::make_unique<PanasonicEthercatInitializer>();
     default:
       return nullptr;
   }
 }
+
+

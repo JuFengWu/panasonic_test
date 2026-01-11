@@ -1,11 +1,11 @@
-﻿#include "panasonicA6B.hpp"
+﻿#include "panasonicA6.hpp"
 #include <unistd.h>
 
 Motor::Motor(int slave, MotorModes mode) : slave_(slave), mode_(mode) {}
 
-PanasonicA6B::PanasonicA6B(int slave, MotorModes mode) : Motor(slave, mode) {}
+PanasonicA6::PanasonicA6(int slave, MotorModes mode) : Motor(slave, mode) {}
 
-void PanasonicA6B::init_csv_mode(uint16 slave) {
+void PanasonicA6::init_csv_mode(uint16 slave) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
 
   // 6060 Mode = 9 (CSV)
@@ -24,7 +24,7 @@ void PanasonicA6B::init_csv_mode(uint16 slave) {
   set_u16(out, 0, 0x000F);
 }
 
-void PanasonicA6B::init_cst_mode(uint16 slave) {
+void PanasonicA6::init_cst_mode(uint16 slave) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
 
   // 6060 operation mode = 10 (CST)
@@ -44,7 +44,7 @@ void PanasonicA6B::init_cst_mode(uint16 slave) {
   set_u16(out, 0, 0x000F);
 }
 
-bool PanasonicA6B::set_mode(MotorModes mode) {
+bool PanasonicA6::set_mode(MotorModes mode) {
   mode_ = mode;
   if (mode_ == CSV_Mode) {
     init_csv_mode(slave_);
@@ -56,11 +56,11 @@ bool PanasonicA6B::set_mode(MotorModes mode) {
 }
 
 // 假設：電子齒輪設定為 1，且「1 指令單位 = 1 度」。
-int32 PanasonicA6B::deg_to_command(double deg) {
+int32 PanasonicA6::deg_to_command(double deg) {
   return (int32)(deg / 360.0 * kCountsPerRev);
 }
 
-bool PanasonicA6B::move_absolute_pp_pdo(uint16 slave, double target_deg) {
+bool PanasonicA6::move_absolute_pp_pdo(uint16 slave, double target_deg) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
   uint8 *in = (uint8*)ec_slave[slave].inputs;
 
@@ -157,7 +157,7 @@ bool PanasonicA6B::move_absolute_pp_pdo(uint16 slave, double target_deg) {
   return false;
 }
 
-void PanasonicA6B::csp_set_target_position(uint16 slave, float target_degree) {
+void PanasonicA6::csp_set_target_position(uint16 slave, float target_degree) {
   int32 target_cmd = deg_to_command(target_degree);
   uint8 *out = (uint8*)ec_slave[slave].outputs;
 
@@ -165,7 +165,7 @@ void PanasonicA6B::csp_set_target_position(uint16 slave, float target_degree) {
   set_i32(out, 7, target_cmd);
 }
 
-bool PanasonicA6B::set_target_position(float target) {
+bool PanasonicA6::set_target_position(float target) {
   (void)target;
   if (mode_ == PP_Mode) {
     return move_absolute_pp_pdo(slave_, target);
@@ -176,7 +176,7 @@ bool PanasonicA6B::set_target_position(float target) {
   return false;
 }
 
-void PanasonicA6B::csv_set_target_velocity(uint16 slave, int32 vel_cmd) {
+void PanasonicA6::csv_set_target_velocity(uint16 slave, int32 vel_cmd) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
   set_i32(out, 17, vel_cmd); // 60FF offset=17
 }
@@ -186,36 +186,36 @@ static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd) {
   set_i16(out, 3, tq_cmd); // 6071 offset=3
 }
 
-bool PanasonicA6B::set_target_velocity(float target) {
+bool PanasonicA6::set_target_velocity(float target) {
   csv_set_target_velocity(slave_, deg_to_command(target));
   return true;
 }
 
-bool PanasonicA6B::set_target_torque(float target) {
+bool PanasonicA6::set_target_torque(float target) {
   cst_set_target_torque(slave_, (int16)(target / 10)); // panasonic 6071 單位是 0.1Nm
   return false;
 }
 
-bool PanasonicA6B::setMotionProfile(const MotionProfile& p) {
+bool PanasonicA6::setMotionProfile(const MotionProfile& p) {
   return setVel(p.vel) && setAcc(p.acc) && setDec(p.dec);
 }
 
-bool PanasonicA6B::setVel(int vel) {
+bool PanasonicA6::setVel(int vel) {
   (void)vel;
   return false;
 }
 
-bool PanasonicA6B::setAcc(int acc) {
+bool PanasonicA6::setAcc(int acc) {
   (void)acc;
   return false;
 }
 
-bool PanasonicA6B::setDec(int dec) {
+bool PanasonicA6::setDec(int dec) {
   (void)dec;
   return false;
 }
 
-void PanasonicA6B::dump_pdo(uint16 slave) {
+void PanasonicA6::dump_pdo(uint16 slave) {
   printf("==== PDO DUMP slave %d ====\n", slave);
 
   printf("Obytes=%d: ", ec_slave[slave].Obytes);
@@ -232,7 +232,7 @@ void PanasonicA6B::dump_pdo(uint16 slave) {
   printf("==========================\n");
 }
 
-PanasonicA6B::PDSState PanasonicA6B::getPDS(uint16 sw) {
+PanasonicA6::PDSState PanasonicA6::getPDS(uint16 sw) {
   if ((sw & 0x004F) == 0x0040) {
     return SWITCH_DISABLED;
   }
@@ -251,7 +251,7 @@ PanasonicA6B::PDSState PanasonicA6B::getPDS(uint16 sw) {
   return UNKNOWN_PDS_STATE;
 }
 
-bool PanasonicA6B::servoOnPDO_mapping4(uint16 slave) {
+bool PanasonicA6::servoOnPDO_mapping4(uint16 slave) {
   uint8 *out = (uint8*)ec_slave[slave].outputs; // 25 bytes
   uint8 *in = (uint8*)ec_slave[slave].inputs; // 25 bytes
 
@@ -310,7 +310,7 @@ bool PanasonicA6B::servoOnPDO_mapping4(uint16 slave) {
   }
 }
 
-bool PanasonicA6B::servo_on() {
+bool PanasonicA6::servo_on() {
   printf("開始 Servo ON...\n");
   if (!servoOnPDO_mapping4(slave_)) {
     notify_fatal();
@@ -320,7 +320,7 @@ bool PanasonicA6B::servo_on() {
   return true;
 }
 
-bool PanasonicA6B::servoOffPDO_mapping4(uint16 slave) {
+bool PanasonicA6::servoOffPDO_mapping4(uint16 slave) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
   uint8 *in = (uint8*)ec_slave[slave].inputs;
 
@@ -372,16 +372,18 @@ bool PanasonicA6B::servoOffPDO_mapping4(uint16 slave) {
   }
 }
 
-bool PanasonicA6B::servo_off() {
+bool PanasonicA6::servo_off() {
   return servoOffPDO_mapping4(slave_);
 }
 
-int PanasonicA6B::get_error_code() { return 0; }
+int PanasonicA6::get_error_code() { return 0; }
 
-int PanasonicA6B::get_current_position() { return 0; }
+int PanasonicA6::get_current_position() { return 0; }
 
-int PanasonicA6B::get_current_velocity() { return 0; }
+int PanasonicA6::get_current_velocity() { return 0; }
 
-int PanasonicA6B::get_current_torque() { return 0; }
+int PanasonicA6::get_current_torque() { return 0; }
 
-MotorModes PanasonicA6B::get_mode() { return mode_; }
+MotorModes PanasonicA6::get_mode() { return mode_; }
+
+

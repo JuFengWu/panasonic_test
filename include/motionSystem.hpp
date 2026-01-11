@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 
 #include "cyclicSession.hpp"
 #include "motionInitializer.hpp"
-#include "panasonicA6B.hpp"
+#include "panasonicA6.hpp"
 
 #include <memory>
 #include <atomic>
@@ -18,7 +18,7 @@ class AllMotors {
   std::unique_ptr<Motor> create_motor(int id);
 
   std::vector<std::unique_ptr<Motor>> motors_;
-  MotorModel model_ = PanasonicA6BMotorType;
+  MotorModel model_ = PanasonicA6MotorType;
   MotorModes mode_ = PP_Mode;
 };
 
@@ -39,9 +39,11 @@ class MotionSystem {
 
   AllMotors motors_;
   CyclicSession session_;
-  MotorModel model_ = PanasonicA6BMotorType;
+  MotorModel model_ = PanasonicA6MotorType;
   MotorModes mode_ = PP_Mode;
   int motor_count_ = 0;
   std::unique_ptr<IMotionInitializer> initializer_;
   std::atomic<bool> closing_{false};
 };
+
+

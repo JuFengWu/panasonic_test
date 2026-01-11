@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "motors.hpp"
 #include "utilities.hpp"
 
-class PanasonicA6B : public Motor {
+class PanasonicA6 : public Motor {
  public:
-  PanasonicA6B(int slave, MotorModes mode);
+  PanasonicA6(int slave, MotorModes mode);
 
   bool set_mode(MotorModes mode) override;
   bool set_target_position(float target) override;
@@ -67,3 +67,5 @@ private:
 			60BAh 00h 32 Touch probe pos1 pos val
 			60FDh 00h 32 Digital inputs
    */
+
+

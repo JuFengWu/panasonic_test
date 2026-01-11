@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <functional>
 #include <utility>
 typedef enum {
@@ -10,7 +10,7 @@ typedef enum {
 } MotorModes;
 
 typedef enum {
-    PanasonicA6BMotorType,
+    PanasonicA6MotorType,
     FakeMotorType,
     UnknownMotorType
 } MotorModel;
@@ -50,3 +50,5 @@ class Motor{
  private:
   FatalHandler fatal_handler_;
 };
+
+
