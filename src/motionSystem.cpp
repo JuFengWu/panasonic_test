@@ -5,8 +5,7 @@
 
 #include <stdexcept>
 
-void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
-{
+void AllMotors::initialize(MotorModel model, MotorModes mode, int count) {
   model_ = model;
   mode_ = mode;
   motors_.clear();
@@ -16,8 +15,7 @@ void AllMotors::initialize(MotorModel model, MotorModes mode, int count)
   }
 }
 
-Motor& AllMotors::motor(int id)
-{
+Motor& AllMotors::motor(int id) {
   if (motors_.empty()) {
     throw std::runtime_error("AllMotors not initialized");
   }
@@ -33,8 +31,7 @@ Motor& AllMotors::motor(int id)
 
 int AllMotors::count() const { return static_cast<int>(motors_.size()); }
 
-std::unique_ptr<Motor> AllMotors::create_motor(int id)
-{
+std::unique_ptr<Motor> AllMotors::create_motor(int id) {
   switch (model_) {
     case PanasonicA6BMotorType:
       return std::make_unique<PanasonicA6B>(id, mode_);
@@ -43,8 +40,8 @@ std::unique_ptr<Motor> AllMotors::create_motor(int id)
   }
 }
 
-bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode)
-{
+bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel model,
+                                MotorModes mode) {
   model_ = model;
   motor_count_ = motor_count;
   mode_ = mode;
@@ -77,28 +74,26 @@ AllMotors& MotionSystem::motors() { return motors_; }
 
 CyclicSession& MotionSystem::session() { return session_; }
 
-bool MotionSystem::run_async()
-{
-  if (!initializer_) return false;
+bool MotionSystem::run_async() {
+  if (!initializer_) {
+    return false;
+  }
   return initializer_->run_async(session_, motors_);
 }
 
-void MotionSystem::stop()
-{
+void MotionSystem::stop() {
   if (initializer_) {
     initializer_->motor_stop();
   }
 }
 
-void MotionSystem::close()
-{
+void MotionSystem::close() {
   if (initializer_) {
     initializer_->motor_close();
   }
 }
 
-std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel model)
-{
+std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel model) {
   switch (model) {
     case FakeMotorType:
       return std::make_unique<FakeInitializer>();
