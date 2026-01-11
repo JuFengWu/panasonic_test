@@ -14,31 +14,79 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
 
 static bool run_pp_mode_test(Motor& m1){
   double posA = 0.0;
-    double posB = 30.0;
+  double posB = 30.0;
 
-    for (int i = 0; i < 5; i++)
+  for (int i = 0; i < 5; i++)
+  {
+    printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posB);
+    if (!m1.set_target_position(posB))
     {
-        printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posB);
-        if (!m1.set_target_position(posB))
-        {
-            printf("Move to %.1f deg failed\n", posB);
-            break;
-        }
-
-        usleep(200000); // 200ms 停一下
-
-        printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posA);
-        if (!m1.set_target_position(posA))
-        {
-            printf("Move to %.1f deg failed\n", posA);
-            break;
-        }
-
-        usleep(200000);
+      printf("Move to %.1f deg failed\n", posB);
+      break;
     }
 
-    printf("=== Move test done ===\n");
-    return true;
+    usleep(200000); // 200ms 停一下
+
+    printf("---- Cycle %d: move to %.1f deg ----\n", i+1, posA);
+    if (!m1.set_target_position(posA))
+    {
+      printf("Move to %.1f deg failed\n", posA);
+      break;
+    }
+
+    usleep(200000);
+  }
+
+  printf("=== Move test done ===\n");
+  return true;
+}
+static bool run_csp_mode_test(Motor& m1){
+  float posA_deg = 0.0f;
+  float posB_deg = 30.0f;
+  int cycles = 5;
+  int32 posA = deg_to_command(posA_deg);
+  int32 posB = deg_to_command(posB_deg);
+
+  // 每 4ms 更新一次（配合你的 PDO thread 週期）
+  const int dt_us = 4000;
+
+  // 用一個合理速度，例如 30 度要 2 秒到達
+  // step = 每週期增加的 command
+  int total_steps = 2000.0 / 4.0;  // 2秒 / 4ms = 500 steps
+  int32 step = (posB - posA) / total_steps;
+  if(step == 0) step = (posB > posA) ? 1 : -1;
+
+  for (int c = 0; c < cycles; c++)
+  {
+    printf("==== CSP Cycle %d: A -> B ====\n", c+1);
+
+    // A -> B
+    int32 cmd = posA;
+    while ((step > 0 && cmd < posB) || (step < 0 && cmd > posB))
+    {
+      m1.set_target_position(cmd);
+      cmd += step;
+      usleep(dt_us);
+    }
+    m1.set_target_position(posB);
+
+    usleep(200000); // 停 200ms
+
+    printf("==== CSP Cycle %d: B -> A ====\n", c+1);
+
+    // B -> A
+    cmd = posB;
+    while ((step > 0 && cmd > posA) || (step < 0 && cmd < posA))
+    {
+      m1.set_target_position(cmd);
+      cmd -= step;
+      usleep(dt_us);
+    }
+    m1.set_target_position(posA);
+
+    usleep(200000);
+  }
+  return true;
 }
 
 static bool run_mode_test(MotorModes mode, Motor& m1)
@@ -46,6 +94,8 @@ static bool run_mode_test(MotorModes mode, Motor& m1)
   switch (mode) {
     case PP_Mode:
       return run_pp_mode_test(m1);
+    case CSP_Mode:
+      return run_csp_mode_test(m1);;
     default:
       printf("Mode test not implemented yet.\n");
       return false;

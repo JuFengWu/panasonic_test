@@ -113,12 +113,24 @@ bool PanasonicA6B::move_absolute_pp_pdo(uint16 slave, double target_deg)
 
     return false;
 }
+void PanasonicA6B::csp_set_target_position(uint16 slave, int32 target_cmd)
+{
+    uint8 *out = (uint8*)ec_slave[slave].outputs;
+
+    // CSP: 只要一直更新 607A (offset=7)
+    set_i32(out, 7, target_cmd);
+}
 bool PanasonicA6B::set_target_position(float target)
 {
   (void)target;
   if (mode_ == PP_Mode){
     return move_absolute_pp_pdo(slave_, target);
+  } else if (mode_ == CSP_Mode)
+  {
+    csp_set_target_position(slave_, target);
+    return true;
   }
+  
 }
 
 bool PanasonicA6B::set_target_velocity(float target)
@@ -188,7 +200,17 @@ bool PanasonicA6B::servoOnPDO_mapping4(uint16 slave)
 
     // ✅ mapping4 下，通常 outputs[0..1] = controlword
     // ✅ outputs[2] = mode (6060)
-    out[2] = 1;  // PP mode
+    if (mode_ == PP_Mode){
+      out[2] = 1;  // PP mode
+    } else if (mode_ == CSV_Mode) {
+      out[2] = 9;  // CSV mode
+    } else if (mode_ == CST_Mode) {
+      out[2] = 10;  // CST mode
+    } else if (mode_ == CSP_Mode){
+      out[2] = 8;  // CSP mode
+    } else{
+      out[2] = 1;  // PP mode
+    }
 
     int loop = 0;
     while (1)
