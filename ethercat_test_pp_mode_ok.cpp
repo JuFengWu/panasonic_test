@@ -84,7 +84,7 @@ PDSState getPDS(uint16 sw)
 			60B9h 00h 16 Touch probe status
 			60BAh 00h 32 Touch probe pos1 pos val
 			60FDh 00h 32 Digital inputs
-   */
+*/
 bool servoOnPDO_mapping4(uint16 slave)
 {
     uint8 *out = (uint8*)ec_slave[slave].outputs; // 25 bytes

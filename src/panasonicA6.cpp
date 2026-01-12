@@ -1,4 +1,5 @@
 ﻿#include "panasonicA6.hpp"
+#include <iostream>
 #include <unistd.h>
 
 Motor::Motor(int slave, MotorModes mode) : slave_(slave), mode_(mode) {}
@@ -183,6 +184,7 @@ void PanasonicA6::csv_set_target_velocity(uint16 slave, int32 vel_cmd) {
 
 static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
+
   set_i16(out, 3, tq_cmd); // 6071 offset=3
 }
 
@@ -192,7 +194,7 @@ bool PanasonicA6::set_target_velocity(float target) {
 }
 
 bool PanasonicA6::set_target_torque(float target) {
-  cst_set_target_torque(slave_, (int16)(target / 10)); // panasonic 6071 單位是 0.1Nm
+  cst_set_target_torque(slave_, (int16)(target * 10)); // panasonic 6071 單位是 0.1Nm
   return false;
 }
 

@@ -175,7 +175,7 @@ int main() {
   printf("使用介面卡: %s\n", ifname);
 
   MotionSystem sys;
-  constexpr MotorModes kMode = PP_Mode;
+  constexpr MotorModes kMode = CST_Mode;// CSV have problem, may be unit is error?
 
   if (!sys.start_connect(ifname, 1, PanasonicA6MotorType, kMode)) {
     printf("sys.start_connect failed\n");
