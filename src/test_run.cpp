@@ -4,11 +4,21 @@
 #include <unistd.h>
 
 static void on_cycle(AllMotors& motors, bool& break_loop) {
-  //auto currentPosition = motors.motor(1).get_current_position();
-  //std::cout << "Current Position: " << currentPosition << std::endl;
+  static int loop_count = 0;
+
+  loop_count++;
+
+  if(loop_count % 50==0){
+    auto currentPosition = motors.motor(1).get_current_position();
+    std::cout << "Current Position: " << currentPosition << std::endl;
+  }
+  
   //auto errorState = motors.motor(1).get_error_code();
   //std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
   //(void)break_loop;
+
+  
+
 }
 
 static bool run_pp_mode_test(Motor& m1) {
@@ -175,7 +185,7 @@ int main() {
   printf("使用介面卡: %s\n", ifname);
 
   MotionSystem sys;
-  constexpr MotorModes kMode = CST_Mode;// CSV have problem, may be unit is error?
+  constexpr MotorModes kMode = PP_Mode;// CSV have problem, may be unit is error?
 
   if (!sys.start_connect(ifname, 1, PanasonicA6MotorType, kMode)) {
     printf("sys.start_connect failed\n");
