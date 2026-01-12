@@ -187,7 +187,7 @@ static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd) {
 }
 
 bool PanasonicA6::set_target_velocity(float target) {
-  csv_set_target_velocity(slave_, deg_to_command(target));
+  csv_set_target_velocity(slave_, target);
   return true;
 }
 
@@ -376,13 +376,25 @@ bool PanasonicA6::servo_off() {
   return servoOffPDO_mapping4(slave_);
 }
 
-int PanasonicA6::get_error_code() { return 0; }
+int PanasonicA6::get_error_code() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;
+  return (int)get_u16(in, 0); // 603F:00 Error code
+}
 
-int PanasonicA6::get_current_position() { return 0; }
+int PanasonicA6::get_current_position() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;   //pulse?
+  return (int)get_i32(in, 5); // 6064:00 Position actual value
+}
 
-int PanasonicA6::get_current_velocity() { return 0; }
+int PanasonicA6::get_current_velocity() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;//指令單位 / 秒
+  return (int)get_i32(in, 9); // 606C:00 Velocity actual value
+}
 
-int PanasonicA6::get_current_torque() { return 0; }
+int PanasonicA6::get_current_torque() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;  //0.1 %（額定轉矩百分比）
+  return (int)get_i16(in, 13); // 6077:00 Torque actual value
+}
 
 MotorModes PanasonicA6::get_mode() { return mode_; }
 
