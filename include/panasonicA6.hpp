@@ -18,7 +18,7 @@ class PanasonicA6 : public Motor {
   bool servo_on() override;
   bool servo_off() override;
   int get_error_code() override;
-  int get_current_position() override;
+  double get_current_position() override;
   int get_current_velocity() override;
   int get_current_torque() override;
  MotorModes get_mode() override;

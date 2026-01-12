@@ -73,7 +73,7 @@ bool FakeMotor::servo_off()
 
 int FakeMotor::get_error_code() { return error_code_; }
 
-int FakeMotor::get_current_position() { return current_position_; }
+double FakeMotor::get_current_position() { return current_position_; }
 
 int FakeMotor::get_current_velocity() { return current_velocity_; }
 

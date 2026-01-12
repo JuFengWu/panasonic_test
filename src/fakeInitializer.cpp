@@ -36,6 +36,34 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   return true;
 }
 
+bool FakeInitializer::run_sync(CyclicSession& session, AllMotors& motors)
+{
+  if (!opened_) return false;
+  if (running_) return false;
+  if (worker_.joinable()) {
+    worker_.join();
+  }
+  running_ = true;
+  worker_ = std::thread([this, &session, &motors]() {
+    using clock = std::chrono::steady_clock;
+    auto next = clock::now();
+    while (running_) {
+      next += std::chrono::milliseconds(4);
+      bool break_loop = false;
+      session.run(motors, break_loop);
+      if (break_loop) {
+        running_ = false;
+        break;
+      }
+      std::this_thread::sleep_until(next);
+    }
+  });
+  if (worker_.joinable()) {
+    worker_.join();
+  }
+  return true;
+}
+
 void FakeInitializer::motor_stop()
 {
   running_ = false;

@@ -383,9 +383,11 @@ int PanasonicA6::get_error_code() {
   return (int)get_u16(in, 0); // 603F:00 Error code
 }
 
-int PanasonicA6::get_current_position() {
-  uint8 *in = (uint8*)ec_slave[slave_].inputs;   //pulse?
-  return (int)get_i32(in, 5); // 6064:00 Position actual value
+double PanasonicA6::get_current_position() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;   // pulse
+  int32 pulse = get_i32(in, 5); // 6064:00 Position actual value
+  double deg = static_cast<double>(pulse) * 360.0 / kCountsPerRev;
+  return deg;
 }
 
 int PanasonicA6::get_current_velocity() {
