@@ -19,8 +19,8 @@ add_executable(test_run
 target_include_directories(test_run PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run ${CMAKE_SOURCE_DIR}/libsoem.a)
 
-add_executable(test_run_async
-    src/test_run_async.cpp
+add_executable(test_run_sync
+    src/test_run_sync.cpp
     src/fakeInitializer.cpp
     src/panasonicA6.cpp
     src/fakeMotor.cpp
@@ -28,8 +28,8 @@ add_executable(test_run_async
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
 )
-target_include_directories(test_run_async PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(test_run_async ${CMAKE_SOURCE_DIR}/libsoem.a)
+target_include_directories(test_run_sync PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_run_sync ${CMAKE_SOURCE_DIR}/libsoem.a)
 
 
 add_executable(pp_mode ethercat_test_pp_mode_ok.cpp)
@@ -54,5 +54,4 @@ add_executable(cst_mode ethercat_test_cst.cpp)
 target_include_directories(cst_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(cst_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 target_link_libraries(cst_mode pthread)
-
 
