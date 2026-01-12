@@ -81,6 +81,13 @@ bool MotionSystem::run_async() {
   return initializer_->run_async(session_, motors_);
 }
 
+bool MotionSystem::run_sync() {
+  if (!initializer_) {
+    return false;
+  }
+  return initializer_->run_sync(session_, motors_);
+}
+
 void MotionSystem::stop() {
   if (initializer_) {
     initializer_->motor_stop();

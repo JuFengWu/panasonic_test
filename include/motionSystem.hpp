@@ -31,6 +31,7 @@ class MotionSystem {
   AllMotors& motors();
   CyclicSession& session();
   bool run_async();
+  bool run_sync();
   void stop();
   void close();
 
