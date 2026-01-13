@@ -12,7 +12,7 @@ class CyclicSession{
   ~CyclicSession();
 
   void setCallback(Callback cb);
-  void run(AllMotors& motors, bool& break_loop);
+  void run(AllMotors& motors, bool& shutdown_requested);
 
  private:
   Callback callback_;

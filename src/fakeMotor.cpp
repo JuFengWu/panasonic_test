@@ -1,5 +1,5 @@
 #include "fakeMotor.hpp"
-
+#include <iostream>
 FakeMotor::FakeMotor(int slave, MotorModes mode)
     : Motor(slave, mode),
       current_position_(0),
@@ -68,6 +68,7 @@ bool FakeMotor::servo_on()
 
 bool FakeMotor::servo_off()
 {
+  std::cout<<"do servo offf"<<std::endl;
   return true;
 }
 

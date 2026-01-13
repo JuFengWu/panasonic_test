@@ -17,8 +17,6 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
   //std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
   //(void)break_loop;
 
-  
-
 }
 
 static bool run_pp_mode_test(Motor& m1) {

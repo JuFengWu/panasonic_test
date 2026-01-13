@@ -235,59 +235,10 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   return true;
 }
 
-bool PanasonicEthercatInitializer::run_sync(CyclicSession& session, AllMotors& motors)
-{
-  if (!opened_) return false;
-  if (running_) return false;
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-  running_ = true;
-  motors_ = &motors;
+std::thread& PanasonicEthercatInitializer::worker_thread() { return worker_; }
 
-  // ====== 6. 主控與 slave 進入 OP ======
-  ec_slave[0].state = EC_STATE_OPERATIONAL;
-  ec_writestate(0);
+std::atomic<bool>& PanasonicEthercatInitializer::running_flag() { return running_; }
 
-  // 等待 slave 進入 OP
-  ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
-  print_state();
-
-  // 等待到 OP
-  int chk = 40;
-  do
-  {
-      ec_send_processdata();
-      ec_receive_processdata(EC_TIMEOUTRET);
-      ec_statecheck(0, EC_STATE_OPERATIONAL, 50000);
-  } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
-
-  printf("開始 4ms PDO loop (sync)...\n");
-
-  osal_usleep(1000000);  // 10ms
-
-  if (ec_slave[0].state != EC_STATE_OPERATIONAL)
-  {
-      printf("無法進入 OP 狀態\n");
-      ec_close();
-      running_ = false;
-      return false;
-  }
-
-  printf("所有站已進入 OP 狀態\n");
-
-  for (int i = 1; i <= ec_slavecount; i++) {
-    auto motorMode = motors.motor(i).get_mode(); // 確認 mode 正確
-    init_motion_params_pdo(i, motorMode);
-  }
-
-  worker_ = std::thread(&PanasonicEthercatInitializer::run_loop, this, std::ref(session), std::ref(motors));
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-  running_ = false;
-  return true;
-}
 bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
 {
     bool ok = true;
@@ -376,9 +327,9 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
     next += std::chrono::milliseconds(4);
     ec_send_processdata();
     ec_receive_processdata(EC_TIMEOUTRET);
-    bool break_loop = false;
-    session.run(motors, break_loop);
-    if (break_loop) {
+    bool shutdown_requested = false;
+    session.run(motors, shutdown_requested);
+    if (shutdown_requested) {
       running_ = false;
       break;
     }
@@ -390,6 +341,13 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
+    bool shutdown_requested = false;
+    std::atomic<bool> servo_off_inflight{false};
+    std::atomic<bool> servo_off_done{false};
+    bool shutdown_countdown_started = false;
+    int shutdown_cycles_left = 0;
+    const int shutdown_hold_cycles = 50;
+    std::thread servo_off_thread;
 
     while (running_)
     {
@@ -403,13 +361,26 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
 
         ec_send_processdata();
         ec_receive_processdata(EC_TIMEOUTRET);
-        bool break_loop = false;
-        session.run(motors, break_loop);
-        if (break_loop) {
-          running_ = false;
+
+        session.run(motors, shutdown_requested);
+
+        handle_shutdown_request(motors,
+                                shutdown_requested,
+                                servo_off_inflight,
+                                servo_off_done,
+                                shutdown_countdown_started,
+                                shutdown_cycles_left,
+                                shutdown_hold_cycles,
+                                servo_off_thread);
+
+        if (!running_) {
           break;
         }
         // sleep 到下一個 tick（比 usleep 穩定）
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
     }
+    if (servo_off_thread.joinable()) {
+      servo_off_thread.join();
+    }
 }
+
