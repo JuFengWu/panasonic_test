@@ -33,7 +33,7 @@ static void on_cycle(AllMotors& motors, bool& shutdown_requested) {
 }
 
 
-static bool run_csp_mode_test(Motor& m1) {
+static bool run_csp_mode_test_cycle(Motor& m1) {
   static bool initialized = false;
   static int cycle_index = 0;
   static int phase = 0;
@@ -114,68 +114,136 @@ static bool run_csp_mode_test(Motor& m1) {
   return false;
 }
 
-void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
-  const int dt_us = 4000; // 4ms
+static bool run_csv_mode_test_cycle(Motor& m1, int32 vel_cmd, int cycles) {
+  static bool initialized = false;
+  static int cycle_index = 0;
+  static int phase = 0;
+  static int steps_remaining = 0;
+  static int hold_ticks = 0;
   const int run_ms = 2000; // 每次跑 2 秒
   const int steps = run_ms / 4; // 2秒 / 4ms = 500 steps
+  const int hold_ticks_total = 50; // 200ms / 4ms
 
-  for (int c = 0; c < cycles; c++) {
-    printf("=== CSV Cycle %d: +vel %d for %dms ===\n", c + 1, vel_cmd, run_ms);
-
-    for (int i = 0; i < steps; i++) {
-      m1.set_target_velocity(vel_cmd);
-      usleep(dt_us);
-    }
-
-    // 停下來
-    m1.set_target_velocity(0);
-    usleep(200000);
-
-    printf("=== CSV Cycle %d: -vel %d for %dms ===\n", c + 1, vel_cmd, run_ms);
-
-    for (int i = 0; i < steps; i++) {
-      m1.set_target_velocity(-vel_cmd);
-      usleep(dt_us);
-    }
-
-    // 停下來
-    m1.set_target_velocity(0);
-    usleep(200000);
+  if (!initialized) {
+    cycle_index = 0;
+    phase = 0;
+    steps_remaining = steps;
+    hold_ticks = 0;
+    initialized = true;
+    printf("=== CSV Cycle %d: +vel %d for %dms ===\n", cycle_index + 1, vel_cmd, run_ms);
   }
 
-  // 最後確保停止
-  m1.set_target_velocity(0);
+  if (cycle_index >= cycles) {
+    m1.set_target_velocity(0);
+    initialized = false;
+    return true;
+  }
+
+  if (phase == 0) {
+    m1.set_target_velocity(vel_cmd);
+    --steps_remaining;
+    if (steps_remaining <= 0) {
+      m1.set_target_velocity(0);
+      hold_ticks = hold_ticks_total;
+      phase = 1;
+    }
+  } else if (phase == 1) {
+    --hold_ticks;
+    if (hold_ticks <= 0) {
+      steps_remaining = steps;
+      phase = 2;
+      printf("=== CSV Cycle %d: -vel %d for %dms ===\n", cycle_index + 1, vel_cmd, run_ms);
+    }
+  } else if (phase == 2) {
+    m1.set_target_velocity(-vel_cmd);
+    --steps_remaining;
+    if (steps_remaining <= 0) {
+      m1.set_target_velocity(0);
+      hold_ticks = hold_ticks_total;
+      phase = 3;
+    }
+  } else if (phase == 3) {
+    --hold_ticks;
+    if (hold_ticks <= 0) {
+      ++cycle_index;
+      if (cycle_index >= cycles) {
+        m1.set_target_velocity(0);
+        initialized = false;
+        return true;
+      }
+      phase = 0;
+      steps_remaining = steps;
+      printf("=== CSV Cycle %d: +vel %d for %dms ===\n", cycle_index + 1, vel_cmd, run_ms);
+    }
+  }
+
+  return false;
 }
 
-void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
-  const int dt_us = 4000; // 4ms
+static bool run_cst_mode_test_cycle(Motor& m1, int16 tq_cmd, int cycles) {
+  static bool initialized = false;
+  static int cycle_index = 0;
+  static int phase = 0;
+  static int steps_remaining = 0;
+  static int hold_ticks = 0;
   const int run_ms = 2000; // 每次跑 2 秒
   const int steps = run_ms / 4; // 2s / 4ms = 500 次更新
+  const int hold_ticks_total = 50; // 200ms / 4ms
 
-  for (int c = 0; c < cycles; c++) {
-    printf("=== CST Cycle %d: +Torque %d for %dms ===\n", c + 1, tq_cmd, run_ms);
-    for (int i = 0; i < steps; i++) {
-      m1.set_target_torque(tq_cmd);
-      usleep(dt_us);
-    }
-
-    // torque = 0
-    m1.set_target_torque(0);
-    usleep(200000);
-
-    printf("=== CST Cycle %d: -Torque %d for %dms ===\n", c + 1, tq_cmd, run_ms);
-    for (int i = 0; i < steps; i++) {
-      m1.set_target_torque(-tq_cmd);
-      usleep(dt_us);
-    }
-
-    // torque = 0
-    m1.set_target_torque(0);
-    usleep(200000);
+  if (!initialized) {
+    cycle_index = 0;
+    phase = 0;
+    steps_remaining = steps;
+    hold_ticks = 0;
+    initialized = true;
+    printf("=== CST Cycle %d: +Torque %d for %dms ===\n", cycle_index + 1, tq_cmd, run_ms);
   }
 
-  // 最後一定要歸 0 扭矩
-  m1.set_target_torque(0);
+  if (cycle_index >= cycles) {
+    m1.set_target_torque(0);
+    initialized = false;
+    return true;
+  }
+
+  if (phase == 0) {
+    m1.set_target_torque(tq_cmd);
+    --steps_remaining;
+    if (steps_remaining <= 0) {
+      m1.set_target_torque(0);
+      hold_ticks = hold_ticks_total;
+      phase = 1;
+    }
+  } else if (phase == 1) {
+    --hold_ticks;
+    if (hold_ticks <= 0) {
+      steps_remaining = steps;
+      phase = 2;
+      printf("=== CST Cycle %d: -Torque %d for %dms ===\n", cycle_index + 1, tq_cmd, run_ms);
+    }
+  } else if (phase == 2) {
+    m1.set_target_torque(-tq_cmd);
+    --steps_remaining;
+    if (steps_remaining <= 0) {
+      m1.set_target_torque(0);
+      hold_ticks = hold_ticks_total;
+      phase = 3;
+    }
+  } else if (phase == 3) {
+    --hold_ticks;
+    if (hold_ticks <= 0) {
+      ++cycle_index;
+      if (cycle_index >= cycles) {
+        m1.set_target_torque(0);
+        initialized = false;
+        return true;
+      }
+      phase = 0;
+      steps_remaining = steps;
+      printf("=== CST Cycle %d: +Torque %d for %dms ===\n", cycle_index + 1, tq_cmd, run_ms);
+    }
+  }
+
+  return false;
 }
 
 static bool run_mode_test(MotorModes mode, Motor& m1) {
@@ -185,13 +253,11 @@ static bool run_mode_test(MotorModes mode, Motor& m1) {
       return false;
       //return run_pp_mode_test(m1);
     case CSP_Mode:
-      return run_csp_mode_test(m1);
+      return run_csp_mode_test_cycle(m1);
     case CSV_Mode:
-      csv_velocity_test(m1, 500000, 2);
-      return true;
+      return run_csv_mode_test_cycle(m1, 500000, 2);
     case CST_Mode:
-      cst_torque_test(m1, 10, 5);
-      return true;
+      return run_cst_mode_test_cycle(m1, 10, 5);
     default:
       printf("Mode test not implemented yet.\n");
       return false;
