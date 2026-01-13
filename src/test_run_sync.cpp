@@ -11,7 +11,6 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
   static int loop_count = 0;
   static int loops_since_servo_on = 0;
   static int loops_since_servo_off = 0;
-  static bool servo_on_sent = false;
   static bool mode_done = false;
   static bool servo_off_sent = false;
   ++loop_count;
@@ -22,13 +21,8 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
     std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
   }
   Motor& m1 = motors.motor(1);
-  if (!servo_on_sent) {
-    m1.servo_on();
-    printf("start servo on!\n");
-    servo_on_sent = true;
-  }
 
-  if (servo_on_sent && !mode_done) {
+  if ( !mode_done) {
     ++loops_since_servo_on;
     if (loops_since_servo_on >= 50) {
       if (run_mode_test(g_mode, m1)) {

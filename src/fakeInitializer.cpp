@@ -36,14 +36,9 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   return true;
 }
 
-bool FakeInitializer::drive_motors()
-{
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-  running_ = false;
-  return true;
-}
+std::thread& FakeInitializer::worker_thread() { return worker_; }
+
+std::atomic<bool>& FakeInitializer::running_flag() { return running_; }
 
 void FakeInitializer::motor_stop()
 {

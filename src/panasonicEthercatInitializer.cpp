@@ -235,14 +235,9 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   return true;
 }
 
-bool PanasonicEthercatInitializer::drive_motors()
-{
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-  running_ = false;
-  return true;
-}
+std::thread& PanasonicEthercatInitializer::worker_thread() { return worker_; }
+
+std::atomic<bool>& PanasonicEthercatInitializer::running_flag() { return running_; }
 
 bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
 {
