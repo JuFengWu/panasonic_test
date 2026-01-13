@@ -1,4 +1,5 @@
 #include "fakeInitializer.hpp"
+#include "motionSystem.hpp"
 
 #include <chrono>
 
@@ -22,15 +23,34 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   worker_ = std::thread([this, &session, &motors]() {
     using clock = std::chrono::steady_clock;
     auto next = clock::now();
+    bool shutdown_requested = false;
+    std::atomic<bool> servo_off_inflight{false};
+    std::atomic<bool> servo_off_done{false};
+    bool shutdown_countdown_started = false;
+    int shutdown_cycles_left = 0;
+    const int shutdown_hold_cycles = 50;
+    std::thread servo_off_thread;
     while (running_) {
       next += std::chrono::milliseconds(4);
-      bool break_loop = false;
-      session.run(motors, break_loop);
-      if (break_loop) {
-        running_ = false;
+
+      session.run(motors, shutdown_requested);
+
+      handle_shutdown_request(motors,
+                              shutdown_requested,
+                              servo_off_inflight,
+                              servo_off_done,
+                              shutdown_countdown_started,
+                              shutdown_cycles_left,
+                              shutdown_hold_cycles,
+                              servo_off_thread);
+
+      if (!running_) {
         break;
       }
       std::this_thread::sleep_until(next);
+    }
+    if (servo_off_thread.joinable()) {
+      servo_off_thread.join();
     }
   });
   return true;

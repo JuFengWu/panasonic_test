@@ -7,12 +7,10 @@ static MotorModes g_mode = CSP_Mode;
 
 static bool run_mode_test(MotorModes mode, Motor& m1);
 
-static void on_cycle(AllMotors& motors, bool& break_loop) {
+static void on_cycle(AllMotors& motors, bool& shutdown_requested) {
   static int loop_count = 0;
   static int loops_since_servo_on = 0;
-  static int loops_since_servo_off = 0;
   static bool mode_done = false;
-  static bool servo_off_sent = false;
   ++loop_count;
   if (loop_count % 50 == 0) {
     auto currentPosition = motors.motor(1).get_current_position();
@@ -22,23 +20,14 @@ static void on_cycle(AllMotors& motors, bool& break_loop) {
   }
   Motor& m1 = motors.motor(1);
 
-  if ( !mode_done) {
-    ++loops_since_servo_on;
+  if (!mode_done) {
+    loops_since_servo_on++;
     if (loops_since_servo_on >= 50) {
       if (run_mode_test(g_mode, m1)) {
         mode_done = true;
-        printf("start do servo off!");
-        m1.servo_off();
-        printf("do servo off!");
-        servo_off_sent = true;
+        printf("request shutdown\n");
+        shutdown_requested = true;
       }
-    }
-  }
-
-  if (servo_off_sent) {
-    ++loops_since_servo_off;
-    if (loops_since_servo_off >= 50) {
-      break_loop = true;
     }
   }
 }
@@ -54,7 +43,7 @@ static bool run_csp_mode_test(Motor& m1) {
   static float posB = 30.0f;
   static float step = 0.0f;
   static float cmd = 0.0f;
-  const int cycles = 5;
+  const int cycles = 2;
   const int total_steps = 500; // 2s / 4ms
   const int hold_ticks_total = 50; // 200ms / 4ms
 

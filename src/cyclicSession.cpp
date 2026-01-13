@@ -6,9 +6,9 @@ CyclicSession::~CyclicSession() = default;
 
 void CyclicSession::setCallback(Callback cb) { callback_ = std::move(cb); }
 
-void CyclicSession::run(AllMotors& motors, bool& break_loop)
+void CyclicSession::run(AllMotors& motors, bool& shutdown_requested)
 {
   if (callback_) {
-    callback_(motors, break_loop);
+    callback_(motors, shutdown_requested);
   }
 }

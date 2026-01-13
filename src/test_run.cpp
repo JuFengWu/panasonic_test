@@ -3,12 +3,12 @@
 #include <memory>
 #include <unistd.h>
 
-static void on_cycle(AllMotors& motors, bool& break_loop) {
+static void on_cycle(AllMotors& motors, bool& shutdown_requested) {
   //auto currentPosition = motors.motor(1).get_current_position();
   //std::cout << "Current Position: " << currentPosition << std::endl;
   //auto errorState = motors.motor(1).get_error_code();
   //std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
-  //(void)break_loop;
+  //(void)shutdown_requested;
 }
 
 static bool run_pp_mode_test(Motor& m1) {
