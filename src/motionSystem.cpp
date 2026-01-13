@@ -85,7 +85,7 @@ bool MotionSystem::drive_motors() {
   if (!initializer_) {
     return false;
   }
-  return initializer_->drive_motors();
+  return initializer_->initial_drive_motors();
 }
 
 void MotionSystem::stop() {

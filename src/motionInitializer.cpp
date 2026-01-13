@@ -37,3 +37,12 @@ void IMotionInitializer::handle_shutdown_request(AllMotors& motors,
     }
   }
 }
+
+bool IMotionInitializer::initial_drive_motors()
+{
+  if (worker_thread().joinable()) {
+    worker_thread().join();
+  }
+  running_flag().store(false);
+  return true;
+}

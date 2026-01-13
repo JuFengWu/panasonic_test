@@ -14,13 +14,7 @@ class IMotionInitializer {
 
   virtual bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) = 0;
   virtual bool run_async(CyclicSession& session, AllMotors& motors) = 0;
-  bool drive_motors() {
-    if (worker_thread().joinable()) {
-      worker_thread().join();
-    }
-    running_flag().store(false);
-    return true;
-  }
+  bool initial_drive_motors();
   virtual void motor_stop() = 0;
   virtual void motor_close() = 0;
 
