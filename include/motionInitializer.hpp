@@ -8,6 +8,16 @@
 
 class AllMotors;
 
+enum class MotionInitError {
+  Ok,
+  AlreadyRunning,
+  NotRunning,
+  StateMachineFault,
+  DataExchangeTimeout,
+  ServoOffFailed,
+  Unknown
+};
+
 class IMotionInitializer {
  public:
   virtual ~IMotionInitializer() = default;
