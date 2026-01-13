@@ -235,59 +235,15 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   return true;
 }
 
-bool PanasonicEthercatInitializer::run_sync(CyclicSession& session, AllMotors& motors)
+bool PanasonicEthercatInitializer::drive_motors()
 {
-  if (!opened_) return false;
-  if (running_) return false;
-  if (worker_.joinable()) {
-    worker_.join();
-  }
-  running_ = true;
-  motors_ = &motors;
-
-  // ====== 6. 主控與 slave 進入 OP ======
-  ec_slave[0].state = EC_STATE_OPERATIONAL;
-  ec_writestate(0);
-
-  // 等待 slave 進入 OP
-  ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
-  print_state();
-
-  // 等待到 OP
-  int chk = 40;
-  do
-  {
-      ec_send_processdata();
-      ec_receive_processdata(EC_TIMEOUTRET);
-      ec_statecheck(0, EC_STATE_OPERATIONAL, 50000);
-  } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
-
-  printf("開始 4ms PDO loop (sync)...\n");
-
-  osal_usleep(1000000);  // 10ms
-
-  if (ec_slave[0].state != EC_STATE_OPERATIONAL)
-  {
-      printf("無法進入 OP 狀態\n");
-      ec_close();
-      running_ = false;
-      return false;
-  }
-
-  printf("所有站已進入 OP 狀態\n");
-
-  for (int i = 1; i <= ec_slavecount; i++) {
-    auto motorMode = motors.motor(i).get_mode(); // 確認 mode 正確
-    init_motion_params_pdo(i, motorMode);
-  }
-
-  worker_ = std::thread(&PanasonicEthercatInitializer::run_loop, this, std::ref(session), std::ref(motors));
   if (worker_.joinable()) {
     worker_.join();
   }
   running_ = false;
   return true;
 }
+
 bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
 {
     bool ok = true;

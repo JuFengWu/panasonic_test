@@ -244,11 +244,13 @@ int main() {
   sess.setCallback(on_cycle);
 
   // ? start: 內部進 OP + cyclicSession.start()
-  if (!sys.run_sync()) {
-    printf("sys.run_sync 失敗\n");
+   if (!sys.run_async()) {
+    printf("sys.run_async 失敗\n");
     sys.close();
     return -1;
   }
+  m1.servo_on();
+  sys.drive_motors();
   //(void)m1;
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);

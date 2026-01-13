@@ -81,11 +81,11 @@ bool MotionSystem::run_async() {
   return initializer_->run_async(session_, motors_);
 }
 
-bool MotionSystem::run_sync() {
+bool MotionSystem::drive_motors() {
   if (!initializer_) {
     return false;
   }
-  return initializer_->run_sync(session_, motors_);
+  return initializer_->drive_motors();
 }
 
 void MotionSystem::stop() {
