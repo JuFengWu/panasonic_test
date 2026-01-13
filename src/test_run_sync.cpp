@@ -226,7 +226,7 @@ int main() {
   constexpr MotorModes kMode = CSP_Mode;// CSV have problem, may be unit is error?
   g_mode = kMode;
 
-  if (!sys.start_connect(ifname, 1, FakeMotorType, kMode)) {
+  if (!sys.start_connect(ifname, 1, PanasonicA6MotorType, kMode)) {
     printf("sys.start_connect failed\n");
     return -1;
   }
