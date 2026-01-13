@@ -1,6 +1,5 @@
 #include "fakeInitializer.hpp"
-#include "motionSystem.hpp"
-
+#include <iostream>
 #include <chrono>
 
 bool FakeInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
@@ -19,39 +18,23 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   if (worker_.joinable()) {
     worker_.join();
   }
+  reset_shutdown_notification();
   running_ = true;
   worker_ = std::thread([this, &session, &motors]() {
     using clock = std::chrono::steady_clock;
     auto next = clock::now();
-    bool shutdown_requested = false;
-    std::atomic<bool> servo_off_inflight{false};
-    std::atomic<bool> servo_off_done{false};
-    bool shutdown_countdown_started = false;
-    int shutdown_cycles_left = 0;
-    const int shutdown_hold_cycles = 50;
-    std::thread servo_off_thread;
     while (running_) {
       next += std::chrono::milliseconds(4);
 
-      session.run(motors, shutdown_requested);
-
-      handle_shutdown_request(motors,
-                              shutdown_requested,
-                              servo_off_inflight,
-                              servo_off_done,
-                              shutdown_countdown_started,
-                              shutdown_cycles_left,
-                              shutdown_hold_cycles,
-                              servo_off_thread);
-
-      if (!running_) {
-        break;
+      bool cycle_shutdown_request = false;
+      session.run(motors, cycle_shutdown_request);
+      if (cycle_shutdown_request) {
+        session.setCallback(nullptr);
+        notify_shutdown_requested();
       }
       std::this_thread::sleep_until(next);
     }
-    if (servo_off_thread.joinable()) {
-      servo_off_thread.join();
-    }
+    printf("FakeInitializer loop thread exit.\n");
   });
   return true;
 }
