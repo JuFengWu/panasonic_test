@@ -7,7 +7,7 @@ static MotorModes g_mode = CSP_Mode;
 
 static bool run_mode_test(MotorModes mode, Motor& m1);
 
-static void on_cycle(AllMotors& motors, bool& shutdown_requested) {
+static void on_cycle(AllMotors& motors, bool& cycle_shutdown_request) {
   static int loop_count = 0;
   static int loops_since_servo_on = 0;
   static bool mode_done = false;
@@ -26,7 +26,7 @@ static void on_cycle(AllMotors& motors, bool& shutdown_requested) {
       if (run_mode_test(g_mode, m1)) {
         mode_done = true;
         printf("request shutdown\n");
-        shutdown_requested = true;
+        cycle_shutdown_request = true;
       }
     }
   }
@@ -308,6 +308,7 @@ int main() {
   // sys.stop();
 
   // close: ec_close + 清理資源
+  m1.servo_off();
   std::cout << "Closing motion system..." << std::endl;
   sys.close();
   return 0;

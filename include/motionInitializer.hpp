@@ -4,9 +4,21 @@
 #include "motors.hpp"
 
 #include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
 class AllMotors;
+
+enum class MotionInitError {
+  Ok,
+  AlreadyRunning,
+  NotRunning,
+  StateMachineFault,
+  DataExchangeTimeout,
+  ServoOffFailed,
+  Unknown
+};
 
 class IMotionInitializer {
  public:
@@ -21,12 +33,11 @@ class IMotionInitializer {
  protected:
   virtual std::thread& worker_thread() = 0;
   virtual std::atomic<bool>& running_flag() = 0;
-  void handle_shutdown_request(AllMotors& motors,
-                               bool shutdown_requested,
-                               std::atomic<bool>& servo_off_inflight,
-                               std::atomic<bool>& servo_off_done,
-                               bool& shutdown_countdown_started,
-                               int& shutdown_cycles_left,
-                               int shutdown_hold_cycles,
-                               std::thread& servo_off_thread);
+  void reset_shutdown_notification();
+  void notify_shutdown_requested();
+
+ private:
+  std::mutex shutdown_mutex_;
+  std::condition_variable shutdown_cv_;
+  bool shutdown_notified_ = false;
 };

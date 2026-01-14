@@ -3,19 +3,13 @@
 #include <memory>
 #include <unistd.h>
 
-static void on_cycle(AllMotors& motors, bool& break_loop) {
-  static int loop_count = 0;
 
-  loop_count++;
-
-  if(loop_count % 50==0){
-    auto currentPosition = motors.motor(1).get_current_position();
-    std::cout << "Current Position: " << currentPosition << std::endl;
-  }
-  
+static void on_cycle(AllMotors& motors, bool& cycle_shutdown_request) {
+  //auto currentPosition = motors.motor(1).get_current_position();
+  //std::cout << "Current Position: " << currentPosition << std::endl;
   //auto errorState = motors.motor(1).get_error_code();
   //std::cout << "Error State: " << static_cast<int>(errorState) << std::endl;
-  //(void)break_loop;
+  //(void)cycle_shutdown_request;
 
 }
 

@@ -192,6 +192,7 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
   if (worker_.joinable()) {
     worker_.join();
   }
+  reset_shutdown_notification();
   running_ = true;
   motors_ = &motors;
 
@@ -327,9 +328,9 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
     next += std::chrono::milliseconds(4);
     ec_send_processdata();
     ec_receive_processdata(EC_TIMEOUTRET);
-    bool shutdown_requested = false;
-    session.run(motors, shutdown_requested);
-    if (shutdown_requested) {
+    bool cycle_shutdown_request = false;
+    session.run(motors, cycle_shutdown_request);
+    if (cycle_shutdown_request) {
       running_ = false;
       break;
     }
@@ -341,14 +342,6 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    bool shutdown_requested = false;
-    std::atomic<bool> servo_off_inflight{false};
-    std::atomic<bool> servo_off_done{false};
-    bool shutdown_countdown_started = false;
-    int shutdown_cycles_left = 0;
-    const int shutdown_hold_cycles = 50;
-    std::thread servo_off_thread;
-
     while (running_)
     {
         // 下一個週期時間點
@@ -362,25 +355,14 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
         ec_send_processdata();
         ec_receive_processdata(EC_TIMEOUTRET);
 
-        session.run(motors, shutdown_requested);
-
-        handle_shutdown_request(motors,
-                                shutdown_requested,
-                                servo_off_inflight,
-                                servo_off_done,
-                                shutdown_countdown_started,
-                                shutdown_cycles_left,
-                                shutdown_hold_cycles,
-                                servo_off_thread);
-
-        if (!running_) {
-          break;
+        bool cycle_shutdown_request = false;
+        session.run(motors, cycle_shutdown_request);
+        if (cycle_shutdown_request) {
+          session.setCallback(nullptr);
+          notify_shutdown_requested();
         }
         // sleep 到下一個 tick（比 usleep 穩定）
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-    }
-    if (servo_off_thread.joinable()) {
-      servo_off_thread.join();
     }
 }
 
