@@ -271,11 +271,11 @@ int main() {
 
   printf("使用介面卡: %s\n", ifname);
 
-  MotionSystem sys;
+  MotionSystem sys(FakeMotorType, ifname);
   constexpr MotorModes kMode = CSP_Mode;// CSV have problem, may be unit is error?
   g_mode = kMode;
 
-  if (!sys.start_connect(ifname, 1, FakeMotorType, kMode)) {
+  if (!sys.start_connect(1, kMode)) {
     printf("sys.start_connect failed\n");
     return -1;
   }

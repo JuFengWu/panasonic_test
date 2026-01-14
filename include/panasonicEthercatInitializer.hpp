@@ -12,10 +12,11 @@
 
 class PanasonicEthercatInitializer : public IMotionInitializer {
  public:
-  bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
+ bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
   bool run_async(CyclicSession& session, AllMotors& motors) override;
-  void motor_stop() override;
-  void motor_close() override;
+  bool get_slave_count(const char* ifname, int& count) override;
+ void motor_stop() override;
+ void motor_close() override;
 
  private:
   void run_loop(CyclicSession& session, AllMotors& motors);

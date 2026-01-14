@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <atomic>
+#include <string>
 #include <vector>
 
 class AllMotors {
@@ -25,12 +26,14 @@ class AllMotors {
 class MotionSystem {
  public:
   MotionSystem() = default;
+  MotionSystem(MotorModel model, const char* ifname);
 
-  bool start_connect(const char* ifname, int motor_count, MotorModel model, MotorModes mode=PP_Mode);
+  bool start_connect(int motor_count, MotorModes mode=PP_Mode);
 
   AllMotors& motors();
   CyclicSession& session();
   bool run_async();
+  bool get_slave_count(int& count);
   bool drive_motors();
   void set_cycle_log_enabled(bool enabled);
   void stop();
@@ -44,6 +47,7 @@ class MotionSystem {
   MotorModel model_ = PanasonicA6MotorType;
   MotorModes mode_ = PP_Mode;
   int motor_count_ = 0;
+  std::string ifname_;
   std::unique_ptr<IMotionInitializer> initializer_;
   std::atomic<bool> closing_{false};
 };

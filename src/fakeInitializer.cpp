@@ -68,6 +68,13 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   return true;
 }
 
+bool FakeInitializer::get_slave_count(const char* ifname, int& count)
+{
+  (void)ifname;
+  count = 0;
+  return false;
+}
+
 std::thread& FakeInitializer::worker_thread() { return worker_; }
 
 std::atomic<bool>& FakeInitializer::running_flag() { return running_; }

@@ -82,6 +82,24 @@ bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave) // TO
            vel, acc, dec, ok ? "OK" : "FAIL");
     return ok;
 }
+bool PanasonicEthercatInitializer::get_slave_count(const char* ifname, int& count)
+{
+  if (!ec_init(ifname)){
+    printf("ec_init 失敗\n");
+    return false;
+  }
+
+  printf("ec_init OK\n");
+
+  if (ec_config_init(FALSE) <= 0){
+    printf("找不到 EtherCAT 從站\n");
+    ec_close();
+    return false;
+  }
+  printf("%d slaves found.\n", ec_slavecount);
+  count = ec_slavecount;
+  return true;
+}
 bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
 {
   opened_ = true;

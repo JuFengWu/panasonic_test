@@ -40,9 +40,12 @@ std::unique_ptr<Motor> AllMotors::create_motor(int id) {
   }
 }
 
-bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel model,
-                                MotorModes mode) {
-  model_ = model;
+MotionSystem::MotionSystem(MotorModel model, const char* ifname)
+    : model_(model), ifname_(ifname ? ifname : "") {
+  initializer_ = create_initializer(model_);
+}
+
+bool MotionSystem::start_connect(int motor_count, MotorModes mode) {
   motor_count_ = motor_count;
   mode_ = mode;
   motors_.initialize(model_, mode_, motor_count_);
@@ -62,7 +65,10 @@ bool MotionSystem::start_connect(const char* ifname, int motor_count, MotorModel
   for (int i = 1; i <= motor_count_; ++i) {
     motors_.motor(i).set_fatal_handler(fatal_handler);
   }
-  bool isInitialOK = initializer_->motor_initial_connect(ifname, motor_count, mode);
+  if (ifname_.empty()) {
+    return false;
+  }
+  bool isInitialOK = initializer_->motor_initial_connect(ifname_.c_str(), motor_count, mode);
 
   for (int i = 1; i <= motor_count_; ++i) {
     motors_.motor(i).set_mode(mode);
@@ -79,6 +85,18 @@ bool MotionSystem::run_async() {
     return false;
   }
   return initializer_->run_async(session_, motors_);
+}
+
+bool MotionSystem::get_slave_count(int& count) {
+  if (!initializer_) {
+    count = 0;
+    return false;
+  }
+  if (ifname_.empty()) {
+    count = 0;
+    return false;
+  }
+  return initializer_->get_slave_count(ifname_.c_str(), count);
 }
 
 bool MotionSystem::drive_motors() {
