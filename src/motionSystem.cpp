@@ -88,6 +88,13 @@ bool MotionSystem::drive_motors() {
   return initializer_->initial_drive_motors();
 }
 
+void MotionSystem::set_cycle_log_enabled(bool enabled) {
+  if (!initializer_) {
+    return;
+  }
+  initializer_->set_cycle_log_enabled(enabled);
+}
+
 void MotionSystem::stop() {
   if (initializer_) {
     initializer_->motor_stop();

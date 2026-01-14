@@ -275,10 +275,11 @@ int main() {
   constexpr MotorModes kMode = CSP_Mode;// CSV have problem, may be unit is error?
   g_mode = kMode;
 
-  if (!sys.start_connect(ifname, 1, PanasonicA6MotorType, kMode)) {
+  if (!sys.start_connect(ifname, 1, FakeMotorType, kMode)) {
     printf("sys.start_connect failed\n");
     return -1;
   }
+  sys.set_cycle_log_enabled(true);
 
   // 取得 motors 與 session（使用者可見）
   auto& motors = sys.motors();

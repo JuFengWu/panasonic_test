@@ -23,8 +23,37 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
   worker_ = std::thread([this, &session, &motors]() {
     using clock = std::chrono::steady_clock;
     auto next = clock::now();
+    auto last = next;
+    long long dt_sum_ns = 0;
+    long long dt_min_ns = 0;
+    long long dt_max_ns = 0;
+    int dt_samples = 0;
+    const int dt_log_interval = 500;
     while (running_) {
       next += std::chrono::milliseconds(4);
+
+      auto now = clock::now();
+      long long dt_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - last).count();
+      last = now;
+      if (dt_samples == 0) {
+        dt_min_ns = dt_ns;
+        dt_max_ns = dt_ns;
+      } else {
+        if (dt_ns < dt_min_ns) dt_min_ns = dt_ns;
+        if (dt_ns > dt_max_ns) dt_max_ns = dt_ns;
+      }
+      dt_sum_ns += dt_ns;
+      ++dt_samples;
+      if (dt_samples >= dt_log_interval) {
+        double avg_us = static_cast<double>(dt_sum_ns) / dt_samples / 1000.0;
+        double min_us = static_cast<double>(dt_min_ns) / 1000.0;
+        double max_us = static_cast<double>(dt_max_ns) / 1000.0;
+        log_cycle_stats(dt_sum_ns, dt_min_ns, dt_max_ns, dt_samples);
+        dt_sum_ns = 0;
+        dt_min_ns = 0;
+        dt_max_ns = 0;
+        dt_samples = 0;
+      }
 
       bool cycle_shutdown_request = false;
       session.run(motors, cycle_shutdown_request);

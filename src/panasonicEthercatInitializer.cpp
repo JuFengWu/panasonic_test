@@ -342,6 +342,12 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
+    struct timespec last_ts = ts;
+    long long dt_sum_ns = 0;
+    long long dt_min_ns = 0;
+    long long dt_max_ns = 0;
+    int dt_samples = 0;
+    const int dt_log_interval = 500;
     while (running_)
     {
         // 下一個週期時間點
@@ -350,6 +356,31 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
         {
             ts.tv_nsec -= 1000000000;
             ts.tv_sec += 1;
+        }
+
+        struct timespec now_ts;
+        clock_gettime(CLOCK_MONOTONIC, &now_ts);
+        long long dt_ns = (now_ts.tv_sec - last_ts.tv_sec) * 1000000000LL +
+                          (now_ts.tv_nsec - last_ts.tv_nsec);
+        last_ts = now_ts;
+        if (dt_samples == 0) {
+          dt_min_ns = dt_ns;
+          dt_max_ns = dt_ns;
+        } else {
+          if (dt_ns < dt_min_ns) dt_min_ns = dt_ns;
+          if (dt_ns > dt_max_ns) dt_max_ns = dt_ns;
+        }
+        dt_sum_ns += dt_ns;
+        ++dt_samples;
+        if (dt_samples >= dt_log_interval) {
+          double avg_us = static_cast<double>(dt_sum_ns) / dt_samples / 1000.0;
+          double min_us = static_cast<double>(dt_min_ns) / 1000.0;
+          double max_us = static_cast<double>(dt_max_ns) / 1000.0;
+          log_cycle_stats(dt_sum_ns, dt_min_ns, dt_max_ns, dt_samples);
+          dt_sum_ns = 0;
+          dt_min_ns = 0;
+          dt_max_ns = 0;
+          dt_samples = 0;
         }
 
         ec_send_processdata();
