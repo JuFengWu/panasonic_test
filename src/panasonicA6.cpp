@@ -379,8 +379,20 @@ bool PanasonicA6::servo_off() {
 }
 
 int PanasonicA6::get_error_code() {
+  //uint8 *in = (uint8*)ec_slave[slave_].inputs;
+  //return (int)get_u16(in, 0); // 603F:00 Error code
+
   uint8 *in = (uint8*)ec_slave[slave_].inputs;
-  return (int)get_u16(in, 0); // 603F:00 Error code
+  uint16 code = get_u16(in, 0);   // 603F
+  int main_code = code & 0x00FF;           // 主碼 (e.g. 80)
+  
+  uint16_t al = 0;
+  ec_FPRD(ec_slave[slave_].configadr, 0x0134, sizeof(al), &al, EC_TIMEOUTRET);
+
+  int sub_code = al;            // 次碼 (e.g. 0001)
+
+  printf("Error Code: 0x%04X, Main: 0x%02X, Sub: 0x%04X\n", code, main_code, sub_code);
+  return main_code;
 }
 
 double PanasonicA6::get_current_position() {
