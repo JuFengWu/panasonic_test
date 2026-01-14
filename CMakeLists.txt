@@ -8,7 +8,7 @@ include_directories(${CMAKE_SOURCE_DIR}/osal/linux)
 include_directories(${CMAKE_SOURCE_DIR}/oshw/linux)
 
 add_executable(test_run
-    src/test_run.cpp
+    demo/test_run.cpp
     src/fakeInitializer.cpp
     src/panasonicA6.cpp
     src/fakeMotor.cpp
@@ -21,7 +21,7 @@ target_include_directories(test_run PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run ${CMAKE_SOURCE_DIR}/libsoem.a)
 
 add_executable(test_run_sync
-    src/test_run_sync.cpp
+    demo/test_run_sync.cpp
     src/fakeInitializer.cpp
     src/panasonicA6.cpp
     src/fakeMotor.cpp
@@ -34,7 +34,7 @@ target_include_directories(test_run_sync PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run_sync ${CMAKE_SOURCE_DIR}/libsoem.a)
 
 add_executable(get_slave_count
-    src/get_slave_count.cpp
+    demo/get_slave_count.cpp
     src/fakeInitializer.cpp
     src/panasonicA6.cpp
     src/fakeMotor.cpp
