@@ -382,17 +382,25 @@ int PanasonicA6::get_error_code() {
   //uint8 *in = (uint8*)ec_slave[slave_].inputs;
   //return (int)get_u16(in, 0); // 603F:00 Error code
 
-  uint8 *in = (uint8*)ec_slave[slave_].inputs;
-  uint16 code = get_u16(in, 0);   // 603F
-  int main_code = code & 0x00FF;           // 主碼 (e.g. 80)
-  
-  uint16_t al = 0;
-  ec_FPRD(ec_slave[slave_].configadr, 0x0134, sizeof(al), &al, EC_TIMEOUTRET);
+   uint8 *in = (uint8*)ec_slave[slave_].inputs;
 
-  int sub_code = al;            // 次碼 (e.g. 0001)
+    // 603F:00 (TxPDO offset 0)
+    uint16_t code = get_u16(in, 0);       // e.g. 0xFF50
+    int main_code = code & 0x00FF;        // 80
 
-  printf("Error Code: 0x%04X, Main: 0x%02X, Sub: 0x%04X\n", code, main_code, sub_code);
-  return main_code;
+    // 讀 state 讓 SOEM 更新 ALstatuscode
+    ec_readstate();
+    uint16_t al = ec_slave[slave_].ALstatuscode;
+
+    printf("603F=0x%04X main=%d (0x%02X)  state=0x%02X  AL=0x%04X\n",
+           code, main_code, main_code, ec_slave[slave_].state, al);
+
+    // 如果你只關心 80.4
+    if (main_code == 80 && al == 0x001B) {
+        printf("=> Err80.4 (PDO watchdog)\n");
+    }
+
+    return main_code;
 }
 
 double PanasonicA6::get_current_position() {
