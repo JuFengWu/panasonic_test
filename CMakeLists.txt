@@ -69,3 +69,6 @@ add_executable(cst_mode ethercat_test_cst.cpp)
 target_include_directories(cst_mode PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(cst_mode ${CMAKE_SOURCE_DIR}/libsoem.a)
 target_link_libraries(cst_mode pthread)
+
+
+add_executable(test_rt test/rt_test.cpp)
