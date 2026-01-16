@@ -13,6 +13,7 @@
 
 #include <fcntl.h>
 #include <sched.h>
+#include <sys/resource.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
@@ -59,10 +60,19 @@ static bool lock_memory() {
   return true;
 }
 
-static void prefault_stack() {
-  constexpr size_t kSize = 8 * 1024 * 1024;
-  volatile char* buf = (volatile char*)alloca(kSize);
-  for (size_t i = 0; i < kSize; i += 4096) buf[i] = 0;
+static void prefault_stack(size_t kb) {
+  if (kb == 0) return;
+  size_t bytes = kb * 1024;
+  rlimit lim{};
+  if (getrlimit(RLIMIT_STACK, &lim) == 0 && lim.rlim_cur != RLIM_INFINITY) {
+    size_t max_bytes = static_cast<size_t>(lim.rlim_cur);
+    if (max_bytes > 0 && bytes > max_bytes / 4) {
+      bytes = max_bytes / 4;
+    }
+  }
+  if (bytes == 0) return;
+  volatile char* buf = (volatile char*)alloca(bytes);
+  for (size_t i = 0; i < bytes; i += 4096) buf[i] = 0;
 }
 
 struct Stats {
@@ -89,6 +99,7 @@ static void print_help(const char* argv0) {
     << "  --period-us N         Period in microseconds (default 4000)\n"
     << "  --duration-s N        Duration in seconds (default 10)\n"
     << "  --burn-us N           Busy-work each cycle to simulate load (default 0)\n"
+    << "  --prefault-kb N       Prefault stack size in KB (default 256, 0 disables)\n"
     << "  --print-every N       Print running stats every N cycles (default 0 = end only)\n"
     << "\nNotes:\n"
     << "  Loop uses a fixed sleep_until period like FakeInitializer::run_async.\n";
@@ -133,6 +144,7 @@ int main(int argc, char** argv) {
   int period_us = 4000;
   int duration_s = 10;
   int burn_us = 0;
+  size_t prefault_kb = 256;
   long long print_every = 0;
 
   for (int i = 1; i < argc; i++) {
@@ -160,6 +172,8 @@ int main(int argc, char** argv) {
       duration_s = std::atoi(need("--duration-s"));
     } else if (a == "--burn-us") {
       burn_us = std::atoi(need("--burn-us"));
+    } else if (a == "--prefault-kb") {
+      prefault_kb = static_cast<size_t>(std::atoll(need("--prefault-kb")));
     } else if (a == "--print-every") {
       print_every = std::atoll(need("--print-every"));
     } else {
@@ -176,7 +190,7 @@ int main(int argc, char** argv) {
     if (!lock_memory()) {
       std::cerr << "Continuing without mlockall (this may increase jitter).\n";
     }
-    prefault_stack();
+    prefault_stack(prefault_kb);
   }
 
   Stats stats{};
@@ -246,3 +260,7 @@ int main(int argc, char** argv) {
   print_summary(stats, samples, static_cast<long long>(period_us) * 1000LL);
   return 0;
 }
+
+
+
+//./test_rt --rt --prefault-kb 0
