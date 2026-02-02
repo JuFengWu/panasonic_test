@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
   bool enable_rt = false;
   int prio = 80;
   int cpu = -1;
-  int period_us = 4000;
+  int period_us = 1000;
   int duration_s = 10;
   int burn_us = 0;
   size_t prefault_kb = 256;

@@ -416,7 +416,7 @@ static pthread_t pdo_thread;
 
 void *pdo_loop_thread(void *arg)
 {
-    const int cycle_ns = 4 * 1000 * 1000; // 4ms = 4,000,000 ns
+    const int cycle_ns = 1 * 1000 * 1000; // 4ms = 4,000,000 ns
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -603,7 +603,7 @@ int main(int argc, char *argv[])
     ec_config_map(&ioMap);
 
 
-    //setInterpolationTimePeriod(SLAVE_ID, 4000);
+    
 
     // ====== 3. 設定 DC ======
     ec_configdc();
@@ -612,6 +612,8 @@ int main(int argc, char *argv[])
 
     // ====== 4. 主站要求 slave 進 SAFE_OP ======
     ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+
+    setInterpolationTimePeriod(SLAVE_ID, 1000);// here!!
 
     // ✅ 在 SAFEOP 做一次 SDO 設定 profile motion 參數（最穩）
     set_profile_motion_params(SLAVE_ID);
