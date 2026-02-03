@@ -271,7 +271,7 @@ int main() {
 
   printf("使用介面卡: %s\n", ifname);
 
-  MotionSystem sys(FakeMotorType, ifname);
+  MotionSystem sys(PanasonicA6MotorType, ifname);
   constexpr MotorModes kMode = CSP_Mode;// CSV have problem, may be unit is error?
   g_mode = kMode;
   int motor_count = 1;
@@ -294,9 +294,8 @@ int main() {
   //設定 realtime callback（callback 在 main 外面）
   sess.setCallback(on_cycle);
 
-  //start: 內部進 OP + cyclicSession.start()
-   if (!sys.run_async()) {
-    printf("sys.run_async 失敗\n");
+   if (!sys.run_async_io()) {
+    printf("sys.run_async_io 失敗\n");
     sys.close();
     return -1;
   }
