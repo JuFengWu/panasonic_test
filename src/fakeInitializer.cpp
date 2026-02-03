@@ -2,11 +2,12 @@
 #include <iostream>
 #include <chrono>
 
-bool FakeInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
+bool FakeInitializer::motor_initial_connect(const char* ifname, int motor_count, int cyclePeriod,MotorModes mode)
 {
   (void)ifname;
   (void)motor_count;
   (void)mode;
+  set_cycle_period_ms(cyclePeriod);
   opened_ = true;
   return true;
 }
@@ -30,7 +31,7 @@ bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
     int dt_samples = 0;
     const int dt_log_interval = 500;
     while (running_) {
-      next += std::chrono::milliseconds(4);
+      next += std::chrono::milliseconds(cycle_period_ms());
 
       auto now = clock::now();
       long long dt_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - last).count();

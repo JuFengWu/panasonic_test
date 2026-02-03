@@ -16,6 +16,19 @@ void IMotionInitializer::set_cycle_log_enabled(bool enabled)
   log_enabled_.store(enabled);
 }
 
+void IMotionInitializer::set_cycle_period_ms(int ms)
+{
+  if (ms <= 0) {
+    ms = 1;
+  }
+  cycle_period_ms_.store(ms);
+}
+
+int IMotionInitializer::cycle_period_ms() const
+{
+  return cycle_period_ms_.load();
+}
+
 void IMotionInitializer::reset_shutdown_notification()
 {
   std::lock_guard<std::mutex> lock(shutdown_mutex_);

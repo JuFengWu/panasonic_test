@@ -178,8 +178,9 @@ int main() {
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
   constexpr MotorModes kMode = PP_Mode;// CSV have problem, may be unit is error?
-
-  if (!sys.start_connect(1, kMode)) {
+  int motor_count = 1;
+  int cyclePeriod = 1; // in ms
+  if (!sys.start_connect(motor_count, cyclePeriod, kMode)) {
     printf("sys.start_connect failed\n");
     return -1;
   }

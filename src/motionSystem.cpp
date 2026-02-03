@@ -45,7 +45,7 @@ MotionSystem::MotionSystem(MotorModel model, const char* ifname)
   initializer_ = create_initializer(model_);
 }
 
-bool MotionSystem::start_connect(int motor_count, MotorModes mode) {
+bool MotionSystem::start_connect(int motor_count,int cyclePeriod, MotorModes mode) {
   motor_count_ = motor_count;
   mode_ = mode;
   motors_.initialize(model_, mode_, motor_count_);
@@ -68,7 +68,7 @@ bool MotionSystem::start_connect(int motor_count, MotorModes mode) {
   if (ifname_.empty()) {
     return false;
   }
-  bool isInitialOK = initializer_->motor_initial_connect(ifname_.c_str(), motor_count, mode);
+  bool isInitialOK = initializer_->motor_initial_connect(ifname_.c_str(), motor_count, cyclePeriod, mode);
 
   for (int i = 1; i <= motor_count_; ++i) {
     motors_.motor(i).set_mode(mode);
@@ -135,5 +135,3 @@ std::unique_ptr<IMotionInitializer> MotionSystem::create_initializer(MotorModel 
       return nullptr;
   }
 }
-
-

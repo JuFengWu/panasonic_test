@@ -53,6 +53,37 @@ bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
     printf("setup_minasa6b_pdo_mapping4 ret=%d\n", ret);
     return (ret > 0);
 }
+bool PanasonicEthercatInitializer::setInterpolationTimePeriod(uint16 slave, int us)
+{
+    uint32 u32val;
+    uint8 u8val;
+
+    switch (us)
+    {
+    case 250:  u32val = 250000;   u8val = 25; break;
+    case 500:  u32val = 500000;   u8val = 5;  break;
+    case 1000: u32val = 1000000;  u8val = 1;  break;
+    case 2000: u32val = 2000000;  u8val = 2;  break;
+    case 4000: u32val = 4000000;  u8val = 4;  break;
+    default:
+        printf("setInterpolationTimePeriod(%d) must be 250,500,1000,2000,4000\n", us);
+        return false;
+    }
+
+    int ok = 1;
+    ok &= sdo_write_u32(slave, 0x1C32, 0x02, u32val);
+    ok &= sdo_write_u8(slave, 0x60C2, 0x01, u8val);
+
+    uint32 r32; uint8 r8;
+    sdo_read_u32(slave, 0x1C32, 0x02, &r32);
+    sdo_read_u8(slave, 0x60C2, 0x01, &r8);
+
+    printf("Set interpolation time period %d us\n", us);
+    printf("1C32:02 cycle time = %u ns\n", r32);
+    printf("60C2:01 interpolation time period = %u\n", r8);
+
+    return ok;
+}
 void PanasonicEthercatInitializer::print_state(){
     ec_readstate();
     printf("++state++\n");
@@ -100,8 +131,9 @@ bool PanasonicEthercatInitializer::get_slave_count(const char* ifname, int& coun
   count = ec_slavecount;
   return true;
 }
-bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count, MotorModes mode)
+bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count,int cyclePeriod, MotorModes mode)
 {
+  set_cycle_period_ms(cyclePeriod);
   opened_ = true;
   initialized_ = true;
 
@@ -152,7 +184,11 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
 
   // ====== 4. 主站要求 slave 進 SAFE_OP ======
   ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-
+  
+  for (int i = 1; i <= ec_slavecount; i++) {
+      setInterpolationTimePeriod(i, cyclePeriod*1000);// here!!
+  }
+  
   if(mode==PP_Mode){
     // ✅ 在 SAFEOP 做一次 SDO 設定 profile motion 參數（最穩）
     for (int i = 1; i <= ec_slavecount; i++) {
@@ -258,7 +294,7 @@ std::thread& PanasonicEthercatInitializer::worker_thread() { return worker_; }
 
 std::atomic<bool>& PanasonicEthercatInitializer::running_flag() { return running_; }
 
-bool PanasonicEthercatInitializer::shutdown_ecat(int pdo_cycle_us)
+bool PanasonicEthercatInitializer::shutdown_ecat()
 {
     bool ok = true;
 
@@ -354,64 +390,62 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
     }
     std::this_thread::sleep_until(next);
   }*/
+  const int cycle_ms = cycle_period_ms();
+  const long long cycle_ns = static_cast<long long>(cycle_ms) * 1000LL * 1000LL;
 
-
-  const int cycle_ns = 4 * 1000 * 1000; // 4ms = 4,000,000 ns
-
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    struct timespec last_ts = ts;
-    long long dt_sum_ns = 0;
-    long long dt_min_ns = 0;
-    long long dt_max_ns = 0;
-    int dt_samples = 0;
-    const int dt_log_interval = 500;
-    while (running_)
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  struct timespec last_ts = ts;
+  long long dt_sum_ns = 0;
+  long long dt_min_ns = 0;
+  long long dt_max_ns = 0;
+  int dt_samples = 0;
+  const int dt_log_interval = 500;
+  while (running_)
+  {
+    // 下一個週期時間點
+    ts.tv_nsec += cycle_ns;
+    while (ts.tv_nsec >= 1000000000)
     {
-        // 下一個週期時間點
-        ts.tv_nsec += cycle_ns;
-        while (ts.tv_nsec >= 1000000000)
-        {
-            ts.tv_nsec -= 1000000000;
-            ts.tv_sec += 1;
-        }
-
-        struct timespec now_ts;
-        clock_gettime(CLOCK_MONOTONIC, &now_ts);
-        long long dt_ns = (now_ts.tv_sec - last_ts.tv_sec) * 1000000000LL +
-                          (now_ts.tv_nsec - last_ts.tv_nsec);
-        last_ts = now_ts;
-        if (dt_samples == 0) {
-          dt_min_ns = dt_ns;
-          dt_max_ns = dt_ns;
-        } else {
-          if (dt_ns < dt_min_ns) dt_min_ns = dt_ns;
-          if (dt_ns > dt_max_ns) dt_max_ns = dt_ns;
-        }
-        dt_sum_ns += dt_ns;
-        ++dt_samples;
-        if (dt_samples >= dt_log_interval) {
-          double avg_us = static_cast<double>(dt_sum_ns) / dt_samples / 1000.0;
-          double min_us = static_cast<double>(dt_min_ns) / 1000.0;
-          double max_us = static_cast<double>(dt_max_ns) / 1000.0;
-          log_cycle_stats(dt_sum_ns, dt_min_ns, dt_max_ns, dt_samples);
-          dt_sum_ns = 0;
-          dt_min_ns = 0;
-          dt_max_ns = 0;
-          dt_samples = 0;
-        }
-
-        ec_send_processdata();
-        ec_receive_processdata(EC_TIMEOUTRET);
-
-        bool cycle_shutdown_request = false;
-        session.run(motors, cycle_shutdown_request);
-        if (cycle_shutdown_request) {
-          session.setCallback(nullptr);
-          notify_shutdown_requested();
-        }
-        // sleep 到下一個 tick（比 usleep 穩定）
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+        ts.tv_nsec -= 1000000000;
+        ts.tv_sec += 1;
     }
-}
 
+    struct timespec now_ts;
+    clock_gettime(CLOCK_MONOTONIC, &now_ts);
+    long long dt_ns = (now_ts.tv_sec - last_ts.tv_sec) * 1000000000LL +
+                      (now_ts.tv_nsec - last_ts.tv_nsec);
+    last_ts = now_ts;
+    if (dt_samples == 0) {
+      dt_min_ns = dt_ns;
+      dt_max_ns = dt_ns;
+    } else {
+      if (dt_ns < dt_min_ns) dt_min_ns = dt_ns;
+      if (dt_ns > dt_max_ns) dt_max_ns = dt_ns;
+    }
+    dt_sum_ns += dt_ns;
+    ++dt_samples;
+    if (dt_samples >= dt_log_interval) {
+      double avg_us = static_cast<double>(dt_sum_ns) / dt_samples / 1000.0;
+      double min_us = static_cast<double>(dt_min_ns) / 1000.0;
+      double max_us = static_cast<double>(dt_max_ns) / 1000.0;
+      log_cycle_stats(dt_sum_ns, dt_min_ns, dt_max_ns, dt_samples);
+      dt_sum_ns = 0;
+      dt_min_ns = 0;
+      dt_max_ns = 0;
+      dt_samples = 0;
+    }
+
+    ec_send_processdata();
+    ec_receive_processdata(EC_TIMEOUTRET);
+
+    bool cycle_shutdown_request = false;
+    session.run(motors, cycle_shutdown_request);
+    if (cycle_shutdown_request) {
+      session.setCallback(nullptr);
+      notify_shutdown_requested();
+    }
+    // sleep 到下一個 tick（比 usleep 穩定）
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+  }
+}

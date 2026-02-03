@@ -12,11 +12,11 @@
 
 class PanasonicEthercatInitializer : public IMotionInitializer {
  public:
- bool motor_initial_connect(const char* ifname, int motor_count, MotorModes mode) override;
+  bool motor_initial_connect(const char* ifname, int motor_count, int cyclePeriod,MotorModes mode) override;
   bool run_async(CyclicSession& session, AllMotors& motors) override;
   bool get_slave_count(const char* ifname, int& count) override;
- void motor_stop() override;
- void motor_close() override;
+  void motor_stop() override;
+  void motor_close() override;
 
  private:
   void run_loop(CyclicSession& session, AllMotors& motors);
@@ -27,10 +27,11 @@ class PanasonicEthercatInitializer : public IMotionInitializer {
   char ioMap[4096];
   std::thread worker_;
   bool setup_minasa6b_pdo_mapping4(uint16 slave);
+  bool setInterpolationTimePeriod(uint16 slave, int us);
   void print_state();
   bool set_profile_motion_params(uint16 slave);
   void init_motion_params_pdo(uint16 slave, MotorModes mode);
-  bool shutdown_ecat(int pdo_cycle_us = 4000);
+  bool shutdown_ecat();
   AllMotors* motors_ = nullptr;
 
  protected:

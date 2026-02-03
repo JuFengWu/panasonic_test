@@ -28,7 +28,7 @@ class MotionSystem {
   MotionSystem() = default;
   MotionSystem(MotorModel model, const char* ifname);
 
-  bool start_connect(int motor_count, MotorModes mode=PP_Mode);
+  bool start_connect(int motor_count, int cyclePeriod,MotorModes mode=PP_Mode);
 
   AllMotors& motors();
   CyclicSession& session();
