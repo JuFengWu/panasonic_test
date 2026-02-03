@@ -26,8 +26,8 @@ class IMotionInitializer {
   virtual ~IMotionInitializer() = default;
 
   virtual bool motor_initial_connect(const char* ifname, int motor_count, int cyclePeriod,MotorModes mode) = 0;
-  virtual bool run_async(CyclicSession& session, AllMotors& motors) = 0;
-  virtual bool run_async_io(CyclicSession& session, AllMotors& motors) = 0;
+  virtual bool initializer_run_async(CyclicSession& session, AllMotors& motors) = 0;
+  virtual bool initializer_run_async_io_only(CyclicSession& session, AllMotors& motors) = 0;
   virtual bool get_slave_count(const char* ifname, int& count) = 0;
   bool initial_drive_motors();
   void set_call_session_enabled(bool enabled);

@@ -26,12 +26,12 @@ bool FakeInitializer::start_async(CyclicSession& session, AllMotors& motors, boo
   return true;
 }
 
-bool FakeInitializer::run_async(CyclicSession& session, AllMotors& motors)
+bool FakeInitializer::initializer_run_async(CyclicSession& session, AllMotors& motors)
 {
   return start_async(session, motors, true);
 }
 
-bool FakeInitializer::run_async_io(CyclicSession& session, AllMotors& motors)
+bool FakeInitializer::initializer_run_async_io_only(CyclicSession& session, AllMotors& motors)
 {
   return start_async(session, motors, false);
 }

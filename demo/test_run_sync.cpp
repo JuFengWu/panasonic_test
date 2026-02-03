@@ -294,8 +294,8 @@ int main() {
   //設定 realtime callback（callback 在 main 外面）
   sess.setCallback(on_cycle);
 
-   if (!sys.run_async_io()) {
-    printf("sys.run_async_io 失敗\n");
+   if (!sys.run_async_io_only()) {
+    printf("sys.run_async_io_only 失敗\n");
     sys.close();
     return -1;
   }

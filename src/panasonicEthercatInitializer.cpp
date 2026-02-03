@@ -290,12 +290,12 @@ bool PanasonicEthercatInitializer::start_async(CyclicSession& session, AllMotors
   return true;
 }
 
-bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& motors)
+bool PanasonicEthercatInitializer::initializer_run_async(CyclicSession& session, AllMotors& motors)
 {
   return start_async(session, motors, true);
 }
 
-bool PanasonicEthercatInitializer::run_async_io(CyclicSession& session, AllMotors& motors)
+bool PanasonicEthercatInitializer::initializer_run_async_io_only(CyclicSession& session, AllMotors& motors)
 {
   return start_async(session, motors, false);
 }

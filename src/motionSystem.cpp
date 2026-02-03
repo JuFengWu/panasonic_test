@@ -84,14 +84,14 @@ bool MotionSystem::run_async() {
   if (!initializer_) {
     return false;
   }
-  return initializer_->run_async(session_, motors_);
+  return initializer_->initializer_run_async(session_, motors_);
 }
 
-bool MotionSystem::run_async_io() {
+bool MotionSystem::run_async_io_only() {
   if (!initializer_) {
     return false;
   }
-  return initializer_->run_async_io(session_, motors_);
+  return initializer_->initializer_run_async_io_only(session_, motors_);
 }
 
 bool MotionSystem::get_slave_count(int& count) {

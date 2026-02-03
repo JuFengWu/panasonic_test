@@ -102,7 +102,7 @@ static void print_help(const char* argv0) {
     << "  --prefault-kb N       Prefault stack size in KB (default 256, 0 disables)\n"
     << "  --print-every N       Print running stats every N cycles (default 0 = end only)\n"
     << "\nNotes:\n"
-    << "  Loop uses a fixed sleep_until period like FakeInitializer::run_async.\n";
+    << "  Loop uses a fixed sleep_until period like FakeInitializer::initializer_run_async.\n";
 }
 
 static void print_summary(const Stats& s, const std::vector<long long>& samples, long long expected_ns) {
