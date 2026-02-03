@@ -11,6 +11,16 @@ bool IMotionInitializer::initial_drive_motors()
   return true;
 }
 
+void IMotionInitializer::set_call_session_enabled(bool enabled)
+{
+  call_session_enabled_.store(enabled);
+}
+
+bool IMotionInitializer::get_call_session_enabled() const
+{
+  return call_session_enabled_.load();
+}
+
 void IMotionInitializer::set_cycle_log_enabled(bool enabled)
 {
   log_enabled_.store(enabled);

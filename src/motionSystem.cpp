@@ -87,6 +87,13 @@ bool MotionSystem::run_async() {
   return initializer_->run_async(session_, motors_);
 }
 
+bool MotionSystem::run_async_io() {
+  if (!initializer_) {
+    return false;
+  }
+  return initializer_->run_async_io(session_, motors_);
+}
+
 bool MotionSystem::get_slave_count(int& count) {
   if (!initializer_) {
     count = 0;
@@ -103,6 +110,7 @@ bool MotionSystem::start_control_loop() {
   if (!initializer_) {
     return false;
   }
+  initializer_->set_call_session_enabled(true);
   return initializer_->initial_drive_motors();
 }
 

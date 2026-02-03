@@ -33,6 +33,7 @@ class MotionSystem {
   AllMotors& motors();
   CyclicSession& session();
   bool run_async();
+  bool run_async_io();
   bool get_slave_count(int& count);
   bool start_control_loop();
   void set_cycle_log_enabled(bool enabled);

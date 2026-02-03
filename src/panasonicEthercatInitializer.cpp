@@ -239,26 +239,26 @@ void PanasonicEthercatInitializer::init_motion_params_pdo(uint16 slave, MotorMod
     set_i32(out, 17, 0);
 }
 
-bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& motors)
+bool PanasonicEthercatInitializer::start_async(CyclicSession& session, AllMotors& motors, bool call_session)
 {
   if (!opened_) return false;
   if (running_) return true;
   if (worker_.joinable()) {
     worker_.join();
   }
+  set_call_session_enabled(call_session);
   reset_shutdown_notification();
   running_ = true;
   motors_ = &motors;
 
-  // ====== 6. 主站要求 slave 進 OP ======
+  // ====== 6. Set slaves to OP ======
   ec_slave[0].state = EC_STATE_OPERATIONAL;
   ec_writestate(0);
 
-  // 等待 slave 真正進 OP
+  // Wait for OP state
   ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
   print_state();
   
-  // 等待達到 OP
   int chk = 40;
   do
   {
@@ -267,29 +267,38 @@ bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& 
       ec_statecheck(0, EC_STATE_OPERATIONAL, 50000);
   } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
 
-  // ✅ 啟動 4ms PDO loop thread（避免 80.4 watchdog）
-  printf("啟動 4ms PDO loop thread...\n");
+  // Start PDO loop thread
+  printf("Start PDO loop thread...\n");
 
-  worker_ = std::thread(&PanasonicEthercatInitializer::run_loop, this, std::ref(session), std::ref(motors));
+  worker_ = std::thread(&PanasonicEthercatInitializer::run_loop_impl, this, std::ref(session), std::ref(motors));
   osal_usleep(1000000);  // 10ms
 
   if (ec_slave[0].state != EC_STATE_OPERATIONAL)
   {
-      printf("沒能成功進入 OP 狀態\n");
+      printf("Failed to reach OP state.\n");
       ec_close();
       return false;
   }
 
-  printf("所有從站已進入 OP 狀態\n");
+  printf("Reached OP state.\n");
 
   for (int i = 1; i <= ec_slavecount; i++) {
-    auto motorMode = motors.motor(i).get_mode(); // 確保 mode 正確
+    auto motorMode = motors.motor(i).get_mode();
     init_motion_params_pdo(i, motorMode);
   }
 
   return true;
 }
 
+bool PanasonicEthercatInitializer::run_async(CyclicSession& session, AllMotors& motors)
+{
+  return start_async(session, motors, true);
+}
+
+bool PanasonicEthercatInitializer::run_async_io(CyclicSession& session, AllMotors& motors)
+{
+  return start_async(session, motors, false);
+}
 std::thread& PanasonicEthercatInitializer::worker_thread() { return worker_; }
 
 std::atomic<bool>& PanasonicEthercatInitializer::running_flag() { return running_; }
@@ -374,22 +383,10 @@ void PanasonicEthercatInitializer::motor_close()
   }
 }
 
-void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& motors)
+void PanasonicEthercatInitializer::run_loop_impl(CyclicSession& session, AllMotors& motors)
 {
-  /*using clock = std::chrono::steady_clock;
-  auto next = clock::now();
-  while (running_) {
-    next += std::chrono::milliseconds(4);
-    ec_send_processdata();
-    ec_receive_processdata(EC_TIMEOUTRET);
-    bool cycle_shutdown_request = false;
-    session.run(motors, cycle_shutdown_request);
-    if (cycle_shutdown_request) {
-      running_ = false;
-      break;
-    }
-    std::this_thread::sleep_until(next);
-  }*/
+  (void)session;
+  (void)motors;
   const int cycle_ms = cycle_period_ms();
   const long long cycle_ns = static_cast<long long>(cycle_ms) * 1000LL * 1000LL;
 
@@ -403,7 +400,6 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
   const int dt_log_interval = 500;
   while (running_)
   {
-    // 下一個週期時間點
     ts.tv_nsec += cycle_ns;
     while (ts.tv_nsec >= 1000000000)
     {
@@ -426,9 +422,6 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
     dt_sum_ns += dt_ns;
     ++dt_samples;
     if (dt_samples >= dt_log_interval) {
-      double avg_us = static_cast<double>(dt_sum_ns) / dt_samples / 1000.0;
-      double min_us = static_cast<double>(dt_min_ns) / 1000.0;
-      double max_us = static_cast<double>(dt_max_ns) / 1000.0;
       log_cycle_stats(dt_sum_ns, dt_min_ns, dt_max_ns, dt_samples);
       dt_sum_ns = 0;
       dt_min_ns = 0;
@@ -439,13 +432,15 @@ void PanasonicEthercatInitializer::run_loop(CyclicSession& session, AllMotors& m
     ec_send_processdata();
     ec_receive_processdata(EC_TIMEOUTRET);
 
-    bool cycle_shutdown_request = false;
-    session.run(motors, cycle_shutdown_request);
-    if (cycle_shutdown_request) {
-      session.setCallback(nullptr);
-      notify_shutdown_requested();
+    if (get_call_session_enabled()) {
+      bool cycle_shutdown_request = false;
+      session.run(motors, cycle_shutdown_request);
+      if (cycle_shutdown_request) {
+        session.setCallback(nullptr);
+        notify_shutdown_requested();
+      }
     }
-    // sleep 到下一個 tick（比 usleep 穩定）
+
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
   }
 }

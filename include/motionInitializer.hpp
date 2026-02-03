@@ -27,8 +27,11 @@ class IMotionInitializer {
 
   virtual bool motor_initial_connect(const char* ifname, int motor_count, int cyclePeriod,MotorModes mode) = 0;
   virtual bool run_async(CyclicSession& session, AllMotors& motors) = 0;
+  virtual bool run_async_io(CyclicSession& session, AllMotors& motors) = 0;
   virtual bool get_slave_count(const char* ifname, int& count) = 0;
   bool initial_drive_motors();
+  void set_call_session_enabled(bool enabled);
+  bool get_call_session_enabled() const;
   void set_cycle_log_enabled(bool enabled);
   void log_cycle_stats(long long dt_sum_ns, long long dt_min_ns, long long dt_max_ns, int dt_samples);
  virtual void motor_stop() = 0;
@@ -46,6 +49,7 @@ class IMotionInitializer {
   std::mutex log_mutex_;
   std::ofstream log_file_;
   std::atomic<bool> log_enabled_{true};
+  std::atomic<bool> call_session_enabled_{true};
   std::atomic<int> cycle_period_ms_{4};
   std::mutex shutdown_mutex_;
   std::condition_variable shutdown_cv_;
