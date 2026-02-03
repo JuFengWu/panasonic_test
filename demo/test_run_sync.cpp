@@ -291,17 +291,17 @@ int main() {
 
   printf("Motor count = %d\n", motors.count());
 
-  // ? 設定 realtime callback（callback 在 main 外面）
+  //設定 realtime callback（callback 在 main 外面）
   sess.setCallback(on_cycle);
 
-  // ? start: 內部進 OP + cyclicSession.start()
+  //start: 內部進 OP + cyclicSession.start()
    if (!sys.run_async()) {
     printf("sys.run_async 失敗\n");
     sys.close();
     return -1;
   }
   m1.servo_on();
-  sys.drive_motors();
+  sys.start_control_loop();
   //(void)m1;
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);

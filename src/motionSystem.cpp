@@ -99,7 +99,7 @@ bool MotionSystem::get_slave_count(int& count) {
   return initializer_->get_slave_count(ifname_.c_str(), count);
 }
 
-bool MotionSystem::drive_motors() {
+bool MotionSystem::start_control_loop() {
   if (!initializer_) {
     return false;
   }

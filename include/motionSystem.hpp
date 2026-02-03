@@ -34,7 +34,7 @@ class MotionSystem {
   CyclicSession& session();
   bool run_async();
   bool get_slave_count(int& count);
-  bool drive_motors();
+  bool start_control_loop();
   void set_cycle_log_enabled(bool enabled);
   void stop();
   void close();
