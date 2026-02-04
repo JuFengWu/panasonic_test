@@ -25,7 +25,7 @@ static bool run_pp_mode_test(Motor& m1) {
       break;
     }
 
-    usleep(200000); // 200ms °±¤@¤U
+    usleep(200000); // 200ms ï¿½ï¿½ï¿½@ï¿½U
 
     printf("---- Cycle %d: move to %.1f deg ----\n", i + 1, posA);
     if (!m1.set_target_position(posA)) {
@@ -47,12 +47,12 @@ static bool run_csp_mode_test(Motor& m1) {
   float posA = posA_deg;
   float posB = posB_deg;
 
-  // ¨C 4ms §ó·s¤@¦¸¡]°t¦X§Aªº PDO thread ¶g´Á¡^
+  // ï¿½C 4ms ï¿½ï¿½sï¿½@ï¿½ï¿½ï¿½]ï¿½tï¿½Xï¿½Aï¿½ï¿½ PDO thread ï¿½gï¿½ï¿½ï¿½^
   const int dt_us = 4000;
 
-  // ¥Î¤@­Ó¦X²z³t«×¡A¨Ò¦p 30 «×­n 2 ¬í¨ì¹F
-  // step = ¨C¶g´Á¼W¥[ªº command
-  int total_steps = 2000.0 / 4.0; // 2¬í / 4ms = 500 steps
+  // ï¿½Î¤@ï¿½Ó¦Xï¿½zï¿½tï¿½×¡Aï¿½Ò¦p 30 ï¿½×­n 2 ï¿½ï¿½ï¿½ï¿½F
+  // step = ï¿½Cï¿½gï¿½ï¿½ï¿½Wï¿½[ï¿½ï¿½ command
+  int total_steps = 2000.0 / 4.0; // 2ï¿½ï¿½ / 4ms = 500 steps
   float step = (posB - posA) / total_steps;
   if (step == 0.0f) {
     step = (posB > posA) ? 0.01f : -0.01f;
@@ -70,7 +70,7 @@ static bool run_csp_mode_test(Motor& m1) {
     }
     m1.set_target_position(posB);
 
-    usleep(200000); // °± 200ms
+    usleep(200000); // ï¿½ï¿½ 200ms
 
     printf("==== CSP Cycle %d: B -> A ====\n", c + 1);
 
@@ -90,8 +90,8 @@ static bool run_csp_mode_test(Motor& m1) {
 
 void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // ¨C¦¸¶] 2 ¬í
-  const int steps = run_ms / 4; // 2¬í / 4ms = 500 steps
+  const int run_ms = 2000; // ï¿½Cï¿½ï¿½ï¿½] 2 ï¿½ï¿½
+  const int steps = run_ms / 4; // 2ï¿½ï¿½ / 4ms = 500 steps
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CSV Cycle %d: +vel %d for %dms ===\n", c + 1, vel_cmd, run_ms);
@@ -101,7 +101,7 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // °±¤U¨Ó
+    // ï¿½ï¿½ï¿½Uï¿½ï¿½
     m1.set_target_velocity(0);
     usleep(200000);
 
@@ -112,19 +112,19 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // °±¤U¨Ó
+    // ï¿½ï¿½ï¿½Uï¿½ï¿½
     m1.set_target_velocity(0);
     usleep(200000);
   }
 
-  // ³Ì«á½T«O°±¤î
+  // ï¿½Ì«ï¿½Tï¿½Oï¿½ï¿½ï¿½ï¿½
   m1.set_target_velocity(0);
 }
 
 void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // ¨C¦¸¶] 2 ¬í
-  const int steps = run_ms / 4; // 2s / 4ms = 500 ¦¸§ó·s
+  const int run_ms = 2000; // ï¿½Cï¿½ï¿½ï¿½] 2 ï¿½ï¿½
+  const int steps = run_ms / 4; // 2s / 4ms = 500 ï¿½ï¿½ï¿½ï¿½s
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CST Cycle %d: +Torque %d for %dms ===\n", c + 1, tq_cmd, run_ms);
@@ -148,7 +148,7 @@ void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
     usleep(200000);
   }
 
-  // ³Ì«á¤@©w­nÂk 0 §á¯x
+  // ï¿½Ì«ï¿½@ï¿½wï¿½nï¿½k 0 ï¿½ï¿½x
   m1.set_target_torque(0);
 }
 
@@ -175,7 +175,7 @@ int main() {
 
   ifname = "enp3s0";
 
-  printf("¨Ï¥Î¤¶­±¥d: %s\n", ifname);
+  printf("ï¿½Ï¥Î¤ï¿½ï¿½ï¿½ï¿½d: %s\n", ifname);
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
   constexpr MotorModes kMode = PP_Mode;// CSV have problem, may be unit is error?
@@ -186,7 +186,7 @@ int main() {
     return -1;
   }
 
-  // ¨ú±o motors »P session¡]¨Ï¥ÎªÌ¥i¨£¡^
+  // ï¿½ï¿½ï¿½o motors ï¿½P sessionï¿½]ï¿½Ï¥ÎªÌ¥iï¿½ï¿½ï¿½^
   auto& motors = sys.motors();
   auto& sess = sys.session();
 
@@ -195,12 +195,12 @@ int main() {
 
   printf("Motor count = %d\n", motors.count());
 
-  // ? ³]©w realtime callback¡]callback ¦b main ¥~­±¡^
+  // ? ï¿½]ï¿½w realtime callbackï¿½]callback ï¿½b main ï¿½~ï¿½ï¿½ï¿½^
   sess.setCallback(on_cycle);
 
-  // ? start: ¤º³¡¶i OP + cyclicSession.start()
+  // ? start: ï¿½ï¿½ï¿½ï¿½ï¿½i OP + cyclicSession.start()
   if (!sys.run_async()) {
-    printf("sys.run_async ¥¢±Ñ\n");
+    printf("sys.run_async ï¿½ï¿½ï¿½ï¿½\n");
     sys.close();
     return -1;
   }
@@ -213,10 +213,10 @@ int main() {
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);
 
-  // stop: °± thread + ¦^ SAFEOP
+  // stop: ï¿½ï¿½ thread + ï¿½^ SAFEOP
   // sys.stop();
 
-  // close: ec_close + ²M²z¸ê·½
+  // close: ec_close + ï¿½Mï¿½zï¿½ê·½
   sys.close();
   return 0;
 }

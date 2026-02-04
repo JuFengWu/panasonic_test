@@ -558,7 +558,42 @@ inline bool shutdown_ecat(uint16 slave_id,
 }
 
 /* ================== main: 整個流程串起來 ================== */
+bool dump_gear_params(uint16 slave)
+{
+    bool ok = true;
 
+    uint32 p3011 = 0;
+
+    uint32 enc_inc = 0, enc_rev = 0;   // 608F:01, 608F:02
+    uint32 gear_num = 0, gear_den = 0; // 6091:01, 6091:02
+    uint32 feed_num = 0, feed_den = 0; // 6092:01, 6092:02
+
+    ok &= sdo_read_u32(slave, 0x3011, 0x00, &p3011);
+
+    ok &= sdo_read_u32(slave, 0x608F, 0x01, &enc_inc);
+    ok &= sdo_read_u32(slave, 0x608F, 0x02, &enc_rev);
+
+    ok &= sdo_read_u32(slave, 0x6091, 0x01, &gear_num);
+    ok &= sdo_read_u32(slave, 0x6091, 0x02, &gear_den);
+
+    ok &= sdo_read_u32(slave, 0x6092, 0x01, &feed_num);
+    ok &= sdo_read_u32(slave, 0x6092, 0x02, &feed_den);
+
+    printf("\n===== A6B Params =====\n");
+    printf("3011:00 pulses_per_rev = %u\n", p3011);
+
+    printf("608F:01 encoder_increments = %u\n", enc_inc);
+    printf("608F:02 motor_revolutions  = %u\n", enc_rev);
+
+    printf("6091:01 gear_ratio_num     = %u\n", gear_num);
+    printf("6091:02 gear_ratio_den     = %u\n", gear_den);
+
+    printf("6092:01 feed_constant_num  = %u\n", feed_num);
+    printf("6092:02 feed_constant_den  = %u\n", feed_den);
+
+    printf("Dump result: %s\n\n", ok ? "OK" : "FAIL");
+    return ok;
+}
 int main(int argc, char *argv[])
 {
     const char *ifname;
@@ -601,9 +636,6 @@ int main(int argc, char *argv[])
 
     /// ====== 2. 自動 PDO mapping ======
     ec_config_map(&ioMap);
-
-
-    
 
     // ====== 3. 設定 DC ======
     ec_configdc();
@@ -655,6 +687,8 @@ int main(int argc, char *argv[])
     }
 
     printf("所有從站已進入 OP 狀態\n");
+
+    dump_gear_params(1);
 
 
     // ✅ 設定 interpolation time period 為 4ms（等同參考 MinasClient）
