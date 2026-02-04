@@ -1,4 +1,5 @@
-Ôªø#include "motionSystem.hpp"
+#include "motionSystem.hpp"
+// New to the project? Start with demo/beginner_demo.cpp for a simpler walkthrough.
 #include <iostream>
 #include <memory>
 #include <unistd.h>
@@ -24,7 +25,7 @@ static bool run_pp_mode_test(Motor& m1) {
       break;
     }
 
-    usleep(200000); // 200ms ÂÅú‰∏Ä‰∏ã
+    usleep(200000); // 200ms ∞±§@§U
 
     printf("---- Cycle %d: move to %.1f deg ----\n", i + 1, posA);
     if (!m1.set_target_position(posA)) {
@@ -46,12 +47,12 @@ static bool run_csp_mode_test(Motor& m1) {
   float posA = posA_deg;
   float posB = posB_deg;
 
-  // ÊØè 4ms Êõ¥Êñ∞‰∏ÄÊ¨°ÔºàÈÖçÂêà‰Ω†ÁöÑ PDO thread ÈÄ±ÊúüÔºâ
+  // ®C 4ms ßÛ∑s§@¶∏°]∞t¶XßA™∫ PDO thread ∂g¥¡°^
   const int dt_us = 4000;
 
-  // Áî®‰∏ÄÂÄãÂêàÁêÜÈÄüÂ∫¶Ôºå‰æãÂ¶Ç 30 Â∫¶Ë¶Å 2 ÁßíÂà∞ÈÅî
-  // step = ÊØèÈÄ±ÊúüÂ¢ûÂä†ÁöÑ command
-  int total_steps = 2000.0 / 4.0; // 2Áßí / 4ms = 500 steps
+  // •Œ§@≠”¶X≤z≥t´◊°A®“¶p 30 ´◊≠n 2 ¨Ì®ÏπF
+  // step = ®C∂g¥¡ºW•[™∫ command
+  int total_steps = 2000.0 / 4.0; // 2¨Ì / 4ms = 500 steps
   float step = (posB - posA) / total_steps;
   if (step == 0.0f) {
     step = (posB > posA) ? 0.01f : -0.01f;
@@ -69,7 +70,7 @@ static bool run_csp_mode_test(Motor& m1) {
     }
     m1.set_target_position(posB);
 
-    usleep(200000); // ÂÅú 200ms
+    usleep(200000); // ∞± 200ms
 
     printf("==== CSP Cycle %d: B -> A ====\n", c + 1);
 
@@ -89,8 +90,8 @@ static bool run_csp_mode_test(Motor& m1) {
 
 void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // ÊØèÊ¨°Ë∑ë 2 Áßí
-  const int steps = run_ms / 4; // 2Áßí / 4ms = 500 steps
+  const int run_ms = 2000; // ®C¶∏∂] 2 ¨Ì
+  const int steps = run_ms / 4; // 2¨Ì / 4ms = 500 steps
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CSV Cycle %d: +vel %d for %dms ===\n", c + 1, vel_cmd, run_ms);
@@ -100,7 +101,7 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // ÂÅú‰∏ã‰æÜ
+    // ∞±§U®”
     m1.set_target_velocity(0);
     usleep(200000);
 
@@ -111,19 +112,19 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // ÂÅú‰∏ã‰æÜ
+    // ∞±§U®”
     m1.set_target_velocity(0);
     usleep(200000);
   }
 
-  // ÊúÄÂæåÁ¢∫‰øùÂÅúÊ≠¢
+  // ≥Ã´·ΩT´O∞±§Ó
   m1.set_target_velocity(0);
 }
 
 void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // ÊØèÊ¨°Ë∑ë 2 Áßí
-  const int steps = run_ms / 4; // 2s / 4ms = 500 Ê¨°Êõ¥Êñ∞
+  const int run_ms = 2000; // ®C¶∏∂] 2 ¨Ì
+  const int steps = run_ms / 4; // 2s / 4ms = 500 ¶∏ßÛ∑s
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CST Cycle %d: +Torque %d for %dms ===\n", c + 1, tq_cmd, run_ms);
@@ -147,7 +148,7 @@ void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
     usleep(200000);
   }
 
-  // ÊúÄÂæå‰∏ÄÂÆöË¶ÅÊ≠∏ 0 Êâ≠Áü©
+  // ≥Ã´·§@©w≠n¬k 0 ß·Øx
   m1.set_target_torque(0);
 }
 
@@ -174,7 +175,7 @@ int main() {
 
   ifname = "enp3s0";
 
-  printf("‰ΩøÁî®‰ªãÈù¢Âç°: %s\n", ifname);
+  printf("®œ•Œ§∂≠±•d: %s\n", ifname);
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
   constexpr MotorModes kMode = PP_Mode;// CSV have problem, may be unit is error?
@@ -185,7 +186,7 @@ int main() {
     return -1;
   }
 
-  // ÂèñÂæó motors Ëàá sessionÔºà‰ΩøÁî®ËÄÖÂèØË¶ãÔºâ
+  // ®˙±o motors ªP session°]®œ•Œ™Ã•i®£°^
   auto& motors = sys.motors();
   auto& sess = sys.session();
 
@@ -194,12 +195,12 @@ int main() {
 
   printf("Motor count = %d\n", motors.count());
 
-  // ? Ë®≠ÂÆö realtime callbackÔºàcallback Âú® main Â§ñÈù¢Ôºâ
+  // ? ≥]©w realtime callback°]callback ¶b main •~≠±°^
   sess.setCallback(on_cycle);
 
-  // ? start: ÂÖßÈÉ®ÈÄ≤ OP + cyclicSession.start()
+  // ? start: §∫≥°∂i OP + cyclicSession.start()
   if (!sys.run_async()) {
-    printf("sys.run_async Â§±Êïó\n");
+    printf("sys.run_async •¢±—\n");
     sys.close();
     return -1;
   }
@@ -212,10 +213,10 @@ int main() {
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);
 
-  // stop: ÂÅú thread + Âõû SAFEOP
+  // stop: ∞± thread + ¶^ SAFEOP
   // sys.stop();
 
-  // close: ec_close + Ê∏ÖÁêÜË≥áÊ∫ê
+  // close: ec_close + ≤M≤z∏Í∑Ω
   sys.close();
   return 0;
 }

@@ -20,6 +20,19 @@ add_executable(test_run
 target_include_directories(test_run PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run ${CMAKE_SOURCE_DIR}/libsoem.a)
 
+add_executable(beginner_demo
+    demo/beginner_demo.cpp
+    src/fakeInitializer.cpp
+    src/panasonicA6.cpp
+    src/fakeMotor.cpp
+    src/motionSystem.cpp
+    src/motionInitializer.cpp
+    src/panasonicEthercatInitializer.cpp
+    src/cyclicSession.cpp
+)
+target_include_directories(beginner_demo PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(beginner_demo ${CMAKE_SOURCE_DIR}/libsoem.a)
+
 add_executable(test_run_sync
     demo/test_run_sync.cpp
     src/fakeInitializer.cpp
