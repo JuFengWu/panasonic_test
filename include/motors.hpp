@@ -38,8 +38,8 @@ class Motor{
   virtual bool servo_off()=0;
   virtual int get_error_code()=0;
   virtual double get_current_position()=0;
-  virtual int get_current_velocity()=0;
-  virtual int get_current_torque()=0;
+  virtual double get_current_velocity()=0;
+  virtual double get_current_torque()=0;
   virtual MotorModes get_mode()=0;
 
  protected:

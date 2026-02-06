@@ -18,8 +18,8 @@ class FakeMotor : public Motor {
   bool servo_off() override;
   int get_error_code() override;
   double get_current_position() override;
-  int get_current_velocity() override;
-  int get_current_torque() override;
+  double get_current_velocity() override;
+  double get_current_torque() override;
   MotorModes get_mode() override;
 
  private:

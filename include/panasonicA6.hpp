@@ -19,8 +19,8 @@ class PanasonicA6 : public Motor {
   bool servo_off() override;
   int get_error_code() override;
   double get_current_position() override;
-  int get_current_velocity() override;
-  int get_current_torque() override;
+  double get_current_velocity() override;
+  double get_current_torque() override;
  MotorModes get_mode() override;
 
 private:
@@ -42,6 +42,10 @@ private:
   void init_cst_mode(uint16 slave);
   void csv_set_target_velocity(uint16 slave, int32 vel_cmd);
   void csp_set_target_position(uint16 slave, float target_degree);
+  static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd);
+  static inline double cmdps_to_rpm(int32_t cmd_per_sec);
+  static inline int32_t rpm_to_cmdps(double rpm);
+  static inline uint32_t rpmps_to_cmdps2(double rpm_per_sec);
   bool servoOnPDO_mapping4(uint16 slave);
   bool servoOffPDO_mapping4(uint16 slave);
 };

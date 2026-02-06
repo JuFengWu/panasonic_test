@@ -182,14 +182,36 @@ void PanasonicA6::csv_set_target_velocity(uint16 slave, int32 vel_cmd) {
   set_i32(out, 17, vel_cmd); // 60FF offset=17
 }
 
-static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd) {
+inline void PanasonicA6::cst_set_target_torque(uint16 slave, int16 tq_cmd) {
   uint8 *out = (uint8*)ec_slave[slave].outputs;
 
   set_i16(out, 3, tq_cmd); // 6071 offset=3
 }
+inline double PanasonicA6::cmdps_to_rpm(int32_t cmd_per_sec)
+{
+    const double cmd_per_rev = 8388608.0; // 6092:01 / 6092:02 (= 608F 23bit/r)
+    return (cmd_per_sec * 60.0) / cmd_per_rev;
+}
 
+inline int32_t PanasonicA6::rpm_to_cmdps(double rpm)
+{
+    const double cmd_per_rev = 8388608.0;
+    return (int32_t)((rpm * cmd_per_rev) / 60.0);
+}
+inline uint32_t PanasonicA6::rpmps_to_cmdps2(double rpm_per_sec)
+{
+    const double cmd_per_rev = 8388608.0;
+
+    double cmdps2 = (rpm_per_sec / 60.0) * cmd_per_rev;
+
+    if (cmdps2 < 0) cmdps2 = 0;
+    if (cmdps2 > 4294967295.0) cmdps2 = 4294967295.0;
+
+    return (uint32_t)(cmdps2 + 0.5);
+}
 bool PanasonicA6::set_target_velocity(float target) {
-  csv_set_target_velocity(slave_, target);
+  int32 cmdps = rpm_to_cmdps(target);
+  csv_set_target_velocity(slave_, cmdps);
   return true;
 }
 
@@ -203,18 +225,43 @@ bool PanasonicA6::setMotionProfile(const MotionProfile& p) {
 }
 
 bool PanasonicA6::setVel(int vel) {
-  (void)vel;
-  return false;
+    
+  uint32_t vel_cmdps = rpm_to_cmdps(vel);
+  int ok = 1;
+  ok &= sdo_write_u32(slave_, 0x6081, 0x00, vel_cmdps);
+  printf("Set 6081 vel=%d rpm -> %u cmd/s\n", vel, vel_cmdps);
+  if (!ok) {
+    return false;
+  }
+  return true;
 }
 
 bool PanasonicA6::setAcc(int acc) {
-  (void)acc;
-  return false;
+  uint32_t acc_cmd = rpmps_to_cmdps2(acc);
+
+  int ok = 1;
+  ok &= sdo_write_u32(slave_, 0x6083, 0x00, acc_cmd);
+
+  printf("Set acc = %d rpm/s -> %u cmd/s^2\n",
+       acc, acc_cmd);
+  if (!ok) {
+    return false;
+  }
+  return true;
 }
 
 bool PanasonicA6::setDec(int dec) {
-  (void)dec;
-  return false;
+  uint32_t dec_cmd = rpmps_to_cmdps2(dec);
+
+  int ok = 1;
+  ok &= sdo_write_u32(slave_, 0x6084, 0x00, dec_cmd);
+
+  printf("Set dec = %d rpm/s -> %u cmd/s^2\n",
+       dec, dec_cmd);
+  if (!ok) {
+    return false;
+  }
+  return true;
 }
 
 void PanasonicA6::dump_pdo(uint16 slave) {
@@ -398,16 +445,15 @@ double PanasonicA6::get_current_position() {
   return deg;
 }
 
-int PanasonicA6::get_current_velocity() {
-  uint8 *in = (uint8*)ec_slave[slave_].inputs;//指令單位 / 秒
-  return (int)get_i32(in, 9); // 606C:00 Velocity actual value
+double PanasonicA6::get_current_velocity() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs; // cmd/s
+  int32 cmdps = get_i32(in, 9); // 606C:00 Velocity actual value
+  return cmdps_to_rpm(cmdps);
 }
 
-int PanasonicA6::get_current_torque() {
-  uint8 *in = (uint8*)ec_slave[slave_].inputs;  //0.1 %（額定轉矩百分比）
-  return (int)get_i16(in, 13); // 6077:00 Torque actual value
+double PanasonicA6::get_current_torque() {
+  uint8 *in = (uint8*)ec_slave[slave_].inputs;  // 0.1% rated torque
+  int16 raw = get_i16(in, 13); // 6077:00 Torque actual value
+  return static_cast<double>(raw) / 10.0;
 }
-
 MotorModes PanasonicA6::get_mode() { return mode_; }
-
-
