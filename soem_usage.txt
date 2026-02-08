@@ -1,0 +1,25 @@
+SOEM usage summary (MotorCode)
+
+src\panasonicA6.cpp
+- SOEM functions: (none)
+- SOEM globals/structs used:
+  - ec_slave (access to inputs/outputs, Obytes/Ibytes)
+
+include\utilities.hpp
+- ec_SDOwrite
+- ec_SDOread
+- ec_elist2string
+
+src\panasonicEthercatInitializer.cpp
+- ec_init
+- ec_config_init
+- ec_config_map
+- ec_configdc
+- ec_readstate
+- ec_writestate
+- ec_statecheck
+- ec_send_processdata
+- ec_receive_processdata
+- ec_SDOread
+- ec_SDOwrite
+- ec_close

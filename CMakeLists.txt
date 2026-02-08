@@ -1,11 +1,31 @@
 cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0148)
+  cmake_policy(SET CMP0148 NEW)
+endif()
 project(EtherCAT_Test)
 
 set(CMAKE_CXX_STANDARD 17)
+option(BUILD_PYTHON "Build Python module bindings" ON)
 include_directories(${CMAKE_SOURCE_DIR}/soem)
 include_directories(${CMAKE_SOURCE_DIR}/osal)
 include_directories(${CMAKE_SOURCE_DIR}/osal/linux)
 include_directories(${CMAKE_SOURCE_DIR}/oshw/linux)
+
+add_library(soem_pic STATIC
+  soem/ethercatbase.c
+  soem/ethercatcoe.c
+  soem/ethercatconfig.c
+  soem/ethercatdc.c
+  soem/ethercateoe.c
+  soem/ethercatfoe.c
+  soem/ethercatmain.c
+  soem/ethercatprint.c
+  soem/ethercatsoe.c
+  osal/linux/osal.c
+  oshw/linux/nicdrv.c
+  oshw/linux/oshw.c
+)
+set_target_properties(soem_pic PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_executable(test_run
     demo/test_run.cpp
@@ -85,3 +105,27 @@ target_link_libraries(cst_mode pthread)
 
 
 add_executable(test_rt test/rt_test.cpp)
+
+if (BUILD_PYTHON)
+  include(FetchContent)
+  FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11.git
+    GIT_TAG v2.11.1
+  )
+  FetchContent_MakeAvailable(pybind11)
+
+  pybind11_add_module(motorcode
+    bindings/pybindings.cpp
+    src/fakeInitializer.cpp
+    src/panasonicA6.cpp
+    src/fakeMotor.cpp
+    src/motionSystem.cpp
+    src/motionInitializer.cpp
+    src/panasonicEthercatInitializer.cpp
+    src/cyclicSession.cpp
+  )
+  target_include_directories(motorcode PRIVATE ${CMAKE_SOURCE_DIR}/include)
+  target_link_libraries(motorcode PRIVATE soem_pic pthread)
+endif ()
+
