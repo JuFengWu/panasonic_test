@@ -16,6 +16,7 @@ add_executable(test_run
     src/motionInitializer.cpp
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
+    src/SoemEthercat.cpp
 )
 target_include_directories(test_run PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run ${CMAKE_SOURCE_DIR}/libsoem.a)
@@ -29,6 +30,7 @@ add_executable(beginner_demo
     src/motionInitializer.cpp
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
+    src/SoemEthercat.cpp
 )
 target_include_directories(beginner_demo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(beginner_demo ${CMAKE_SOURCE_DIR}/libsoem.a)
@@ -42,6 +44,7 @@ add_executable(test_run_sync
     src/motionInitializer.cpp
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
+    src/SoemEthercat.cpp
 )
 target_include_directories(test_run_sync PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_run_sync ${CMAKE_SOURCE_DIR}/libsoem.a)
@@ -55,6 +58,7 @@ add_executable(get_slave_count
     src/motionInitializer.cpp
     src/panasonicEthercatInitializer.cpp
     src/cyclicSession.cpp
+    src/SoemEthercat.cpp
 )
 target_include_directories(get_slave_count PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(get_slave_count ${CMAKE_SOURCE_DIR}/libsoem.a)

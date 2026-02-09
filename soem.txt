@@ -1,0 +1,29 @@
+SOEM usage summary (MotorCode)
+
+src\panasonicA6.cpp
+- SOEM functions: (none)
+- SOEM globals/structs used:
+  - ec_slave (access to inputs/outputs, Obytes/Ibytes)
+
+include\utilities.hpp
+- ec_SDOwrite 對應到 write_sdo_state
+- ec_SDOread 對應到 read_sdo_state
+- ec_elist2string 對應到 get_error_message
+
+src\panasonicEthercatInitializer.cpp
+- ec_init  對應到 init(const char* ifname);
+- ec_config_init 對應到 scan_slaves
+- ec_config_map  setting_pdo_mapping
+- ec_configdc  setting_dc
+- ec_readstate  read_ehtercat_state
+- ec_writestate  write_ethercat_state
+- ec_statecheck  check_ethercat_state
+- ec_send_processdata  set_pdo_data
+- ec_receive_processdata  get_pdo_data
+- ec_SDOread  read_sdo_state
+- ec_SDOwrite  write_sdo_state
+- ec_close 對應到 clos
+
+
+ read_sdo_state() / write_sdo_state() 在使用前要先呼叫 set_sdo_read_request / set_sdo_write_request 設定參數，否則會
+    回傳失敗並給錯誤訊息。
