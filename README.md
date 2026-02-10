@@ -20,3 +20,10 @@
    讓馬達實際運行一段時間。
 8. **Servo OFF 與關閉**  
    呼叫 `servo_off()`，最後 `close()` 釋放資源並結束。
+
+## Cppcheck
+### Run Static Analysis
+```bash
+cmake -S .. -B build
+cmake --build build --target cppcheck
+```

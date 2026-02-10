@@ -238,3 +238,7 @@ int SoemEthercat::get_slave_ibytes(std::uint16_t slave) const {
 int SoemEthercat::timeout_state() const {
     return EC_TIMEOUTSTATE;
 }
+
+const std::string& SoemEthercat::last_error() const {
+    return last_error_;
+}

@@ -86,6 +86,7 @@ class SoemEthercat : public MyEthercat {
     int get_slave_ibytes(std::uint16_t slave) const override;
 
     int timeout_state() const override;
+    const std::string& last_error() const;
 
  private:
     std::string last_error_;

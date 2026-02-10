@@ -89,3 +89,46 @@ target_link_libraries(cst_mode pthread)
 
 
 add_executable(test_rt test/rt_test.cpp)
+
+# ---- Cppcheck static analysis ----
+option(ENABLE_CPPCHECK "Enable cppcheck analysis target" ON)
+if(ENABLE_CPPCHECK)
+    find_program(CPPCHECK_EXE NAMES cppcheck)
+    if(CPPCHECK_EXE)
+        file(GLOB_RECURSE CPPCHECK_SOURCES CONFIGURE_DEPENDS
+            ${CMAKE_SOURCE_DIR}/src/*.c
+            ${CMAKE_SOURCE_DIR}/src/*.cpp
+            ${CMAKE_SOURCE_DIR}/src/*.h
+            ${CMAKE_SOURCE_DIR}/src/*.hpp
+            ${CMAKE_SOURCE_DIR}/include/*.c
+            ${CMAKE_SOURCE_DIR}/include/*.cpp
+            ${CMAKE_SOURCE_DIR}/include/*.h
+            ${CMAKE_SOURCE_DIR}/include/*.hpp
+            ${CMAKE_SOURCE_DIR}/demo/*.c
+            ${CMAKE_SOURCE_DIR}/demo/*.cpp
+            ${CMAKE_SOURCE_DIR}/demo/*.h
+            ${CMAKE_SOURCE_DIR}/demo/*.hpp
+            ${CMAKE_SOURCE_DIR}/test/*.c
+            ${CMAKE_SOURCE_DIR}/test/*.cpp
+            ${CMAKE_SOURCE_DIR}/test/*.h
+            ${CMAKE_SOURCE_DIR}/test/*.hpp
+        )
+        add_custom_target(cppcheck
+            COMMAND ${CPPCHECK_EXE}
+                --enable=warning,style,performance,portability
+                --inline-suppr
+                --language=c++
+                --std=c++17
+                -I ${CMAKE_SOURCE_DIR}/include
+                -I ${CMAKE_SOURCE_DIR}/soem
+                -I ${CMAKE_SOURCE_DIR}/osal
+                -I ${CMAKE_SOURCE_DIR}/osal/linux
+                -I ${CMAKE_SOURCE_DIR}/oshw/linux
+                ${CPPCHECK_SOURCES}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running cppcheck on project sources"
+        )
+    else()
+        message(WARNING "cppcheck not found: cppcheck target will be unavailable.")
+    endif()
+endif()

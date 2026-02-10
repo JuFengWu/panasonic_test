@@ -11,11 +11,11 @@ inline void a6_set_i16(uint8 *p, int off, int16 v) {
   p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
 }
 
-inline int16 a6_get_i16(uint8 *p, int off) {
+inline int16 a6_get_i16(const uint8 *p, int off) {
   return static_cast<int16>(p[off] | (p[off + 1] << 8));
 }
 
-inline uint16 a6_get_u16(uint8 *p, int off) {
+inline uint16 a6_get_u16(const uint8 *p, int off) {
   return static_cast<uint16>(p[off] | (p[off + 1] << 8));
 }
 
@@ -24,7 +24,7 @@ inline void a6_set_u16(uint8 *p, int off, uint16 v) {
   p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
 }
 
-inline int32 a6_get_i32(uint8 *p, int off) {
+inline int32 a6_get_i32(const uint8 *p, int off) {
   return static_cast<int32>(p[off] | (p[off + 1] << 8) | (p[off + 2] << 16) |
                             (p[off + 3] << 24));
 }
@@ -115,7 +115,7 @@ bool PanasonicA6::move_absolute_pp_pdo(uint16 slave, double target_deg) {
     return false;
   }
   uint8 *out = ethercat_->get_slave_outputs(slave);
-  uint8 *in = ethercat_->get_slave_inputs(slave);
+  const uint8 *in = ethercat_->get_slave_inputs(slave);
   if (!out || !in) {
     return false;
   }
@@ -565,7 +565,7 @@ double PanasonicA6::get_current_velocity() {
   if (!ethercat_) {
     return 0.0;
   }
-  uint8 *in = ethercat_->get_slave_inputs(slave_); // cmd/s
+  const uint8 *in = ethercat_->get_slave_inputs(slave_); // cmd/s
   if (!in) {
     return 0.0;
   }
@@ -577,7 +577,7 @@ double PanasonicA6::get_current_torque() {
   if (!ethercat_) {
     return 0.0;
   }
-  uint8 *in = ethercat_->get_slave_inputs(slave_);  // 0.1% rated torque
+  const uint8 *in = ethercat_->get_slave_inputs(slave_);  // 0.1% rated torque
   if (!in) {
     return 0.0;
   }

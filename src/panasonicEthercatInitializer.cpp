@@ -39,11 +39,11 @@ static inline void pe_set_i16(uint8 *p, int off, int16 v) {
   p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
 }
 
-static inline int16 pe_get_i16(uint8 *p, int off) {
+static inline int16 pe_get_i16(const uint8 *p, int off) {
   return static_cast<int16>(p[off] | (p[off + 1] << 8));
 }
 
-static inline uint16 pe_get_u16(uint8 *p, int off) {
+static inline uint16 pe_get_u16(const uint8 *p, int off) {
   return static_cast<uint16>(p[off] | (p[off + 1] << 8));
 }
 
@@ -52,7 +52,7 @@ static inline void pe_set_u16(uint8 *p, int off, uint16 v) {
   p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
 }
 
-static inline int32 pe_get_i32(uint8 *p, int off) {
+static inline int32 pe_get_i32(const uint8 *p, int off) {
   return static_cast<int32>(p[off] | (p[off + 1] << 8) | (p[off + 2] << 16) |
                  (p[off + 3] << 24));
 }
@@ -223,13 +223,13 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   initialized_ = true;
 
   if (!ethercat_) {
-      return -1;
+      return false;
   }
 
   if (!ethercat_->init(ifname))
   {
       printf("ec_init 失敗\n");
-      return -1;
+      return false;
   }
 
   printf("ec_init OK\n");
@@ -238,7 +238,7 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   {
       printf("找不到 EtherCAT 從站\n");
       ethercat_->close();
-      return -1;
+      return false;
   }
 
   int slavecount = ethercat_->get_slave_count();
@@ -246,7 +246,7 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   if(slavecount!=motor_count){
       printf("從站數量與預期不符\n");
       ethercat_->close();
-      return -1;
+      return false;
   }
   ethercat_->read_ehtercat_state();
   print_state();
@@ -263,13 +263,13 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   /// ====== 2. 自動 PDO mapping ======
   if (ethercat_->config_pdo_mapping(&ioMap) <= 0) {
       printf("config_pdo_mapping failed\n");
-      return -1;
+      return false;
   }
 
   // ====== 3. 設定 DC ======
   if (!ethercat_->setting_dc()) {
       printf("setting_dc failed\n");
-      return -1;
+      return false;
   }
 
   print_state();
