@@ -108,15 +108,18 @@ bool SoemEthercat::scan_slaves() {
     return true;
 }
 
-bool SoemEthercat::setting_pdo_mapping(int slave_id) {
-    (void)slave_id;
+int SoemEthercat::config_pdo_mapping(void* io_map) {
     last_error_.clear();
-    int size = ec_config_map(io_map_.data());
+    if (io_map == nullptr) {
+        last_error_ = "io_map is null";
+        return 0;
+    }
+    int size = ec_config_map(io_map);
     if (size <= 0) {
         last_error_ = make_soem_error_fallback("ec_config_map failed");
-        return false;
+        return 0;
     }
-    return true;
+    return size;
 }
 
 bool SoemEthercat::setting_dc() {
@@ -138,9 +141,9 @@ bool SoemEthercat::read_ehtercat_state() {
     return true;
 }
 
-bool SoemEthercat::write_ethercat_state() {
+bool SoemEthercat::write_ethercat_state(std::uint16_t slave) {
     last_error_.clear();
-    int rc = ec_writestate(0);
+    int rc = ec_writestate(slave);
     if (rc <= 0) {
         last_error_ = make_soem_error_fallback("ec_writestate failed");
         return false;
@@ -148,14 +151,8 @@ bool SoemEthercat::write_ethercat_state() {
     return true;
 }
 
-bool SoemEthercat::check_ethercat_state() {
-    last_error_.clear();
-    int state = ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
-    if (state != EC_STATE_OPERATIONAL) {
-        last_error_ = make_soem_error_fallback("ec_statecheck failed");
-        return false;
-    }
-    return true;
+int SoemEthercat::state_check(std::uint16_t slave, std::uint16_t state, int timeout) {
+    return ec_statecheck(slave, state, timeout);
 }
 
 bool SoemEthercat::set_pdo_data() {
@@ -182,4 +179,62 @@ bool SoemEthercat::close_ethercat() {
     last_error_.clear();
     ec_close();
     return true;
+}
+
+int SoemEthercat::get_slave_count() const {
+    return ec_slavecount;
+}
+
+bool SoemEthercat::set_slave_state(std::uint16_t slave, std::uint16_t state) {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return false;
+    }
+    ec_slave[slave].state = state;
+    return ec_writestate(slave) > 0;
+}
+
+std::uint16_t SoemEthercat::get_slave_state(std::uint16_t slave) const {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return 0;
+    }
+    return ec_slave[slave].state;
+}
+
+std::uint16_t SoemEthercat::get_slave_al_status(std::uint16_t slave) const {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return 0;
+    }
+    return ec_slave[slave].ALstatuscode;
+}
+
+std::uint8_t* SoemEthercat::get_slave_outputs(std::uint16_t slave) {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return nullptr;
+    }
+    return static_cast<std::uint8_t*>(ec_slave[slave].outputs);
+}
+
+std::uint8_t* SoemEthercat::get_slave_inputs(std::uint16_t slave) {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return nullptr;
+    }
+    return static_cast<std::uint8_t*>(ec_slave[slave].inputs);
+}
+
+int SoemEthercat::get_slave_obytes(std::uint16_t slave) const {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return 0;
+    }
+    return ec_slave[slave].Obytes;
+}
+
+int SoemEthercat::get_slave_ibytes(std::uint16_t slave) const {
+    if (slave > static_cast<std::uint16_t>(ec_slavecount)) {
+        return 0;
+    }
+    return ec_slave[slave].Ibytes;
+}
+
+int SoemEthercat::timeout_state() const {
+    return EC_TIMEOUTSTATE;
 }

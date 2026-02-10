@@ -1,7 +1,8 @@
 
-#include "panasonicEthercatInitializer.hpp"
+#include "Ethercat.hpp"
 #include "motionSystem.hpp"
 #include <iostream>
+#include <memory>
 int main() {
   const char* ifname;
 

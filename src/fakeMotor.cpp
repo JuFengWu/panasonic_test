@@ -1,7 +1,8 @@
 #include "fakeMotor.hpp"
 #include <iostream>
-FakeMotor::FakeMotor(int slave, MotorModes mode)
-    : Motor(slave, mode),
+#include <utility>
+FakeMotor::FakeMotor(int slave, MotorModes mode, std::shared_ptr<MyEthercat> ethercat)
+    : Motor(slave, mode, std::move(ethercat)),
       current_position_(0),
       current_velocity_(0),
       current_torque_(0),

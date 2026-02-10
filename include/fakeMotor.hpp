@@ -1,10 +1,11 @@
 #pragma once
 
 #include "motors.hpp"
+#include <memory>
 
 class FakeMotor : public Motor {
  public:
-  FakeMotor(int slave, MotorModes mode);
+  FakeMotor(int slave, MotorModes mode, std::shared_ptr<MyEthercat> ethercat);
 
   bool set_mode(MotorModes mode) override;
   bool set_target_position(float target) override;

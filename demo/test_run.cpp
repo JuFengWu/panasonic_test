@@ -1,3 +1,4 @@
+#include "Ethercat.hpp"
 #include "motionSystem.hpp"
 // New to the project? Start with demo/beginner_demo.cpp for a simpler walkthrough.
 #include <iostream>
@@ -25,7 +26,7 @@ static bool run_pp_mode_test(Motor& m1) {
       break;
     }
 
-    usleep(200000); // 200ms ���@�U
+    usleep(200000); // 200ms pause
 
     printf("---- Cycle %d: move to %.1f deg ----\n", i + 1, posA);
     if (!m1.set_target_position(posA)) {
@@ -47,12 +48,12 @@ static bool run_csp_mode_test(Motor& m1) {
   float posA = posA_deg;
   float posB = posB_deg;
 
-  // �C 4ms ��s�@���]�t�X�A�� PDO thread �g���^
+  // Update target every 4ms so PDO thread can send in time
   const int dt_us = 4000;
 
-  // �Τ@�ӦX�z�t�סA�Ҧp 30 �׭n 2 ����F
-  // step = �C�g���W�[�� command
-  int total_steps = 2000.0 / 4.0; // 2�� / 4ms = 500 steps
+  // Complete the move in 2 seconds, e.g. 30 deg
+  // step = delta command per cycle
+  int total_steps = 2000.0 / 4.0; // 2 sec / 4ms = 500 steps
   float step = (posB - posA) / total_steps;
   if (step == 0.0f) {
     step = (posB > posA) ? 0.01f : -0.01f;
@@ -70,7 +71,7 @@ static bool run_csp_mode_test(Motor& m1) {
     }
     m1.set_target_position(posB);
 
-    usleep(200000); // �� 200ms
+    usleep(200000); // 200ms
 
     printf("==== CSP Cycle %d: B -> A ====\n", c + 1);
 
@@ -90,8 +91,8 @@ static bool run_csp_mode_test(Motor& m1) {
 
 void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // �C���] 2 ��
-  const int steps = run_ms / 4; // 2�� / 4ms = 500 steps
+  const int run_ms = 2000; // run for 2 seconds
+  const int steps = run_ms / 4; // 2 sec / 4ms = 500 steps
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CSV Cycle %d: +vel %d for %dms ===\n", c + 1, vel_cmd, run_ms);
@@ -101,7 +102,7 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // ���U��
+    // pause
     m1.set_target_velocity(0);
     usleep(200000);
 
@@ -112,19 +113,19 @@ void csv_velocity_test(Motor& m1, int32 vel_cmd, int cycles) {
       usleep(dt_us);
     }
 
-    // ���U��
+    // pause
     m1.set_target_velocity(0);
     usleep(200000);
   }
 
-  // �̫�T�O����
+  // return to 0 at the end
   m1.set_target_velocity(0);
 }
 
 void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
   const int dt_us = 4000; // 4ms
-  const int run_ms = 2000; // �C���] 2 ��
-  const int steps = run_ms / 4; // 2s / 4ms = 500 ����s
+  const int run_ms = 2000; // run for 2 seconds
+  const int steps = run_ms / 4; // 2s / 4ms = 500 steps
 
   for (int c = 0; c < cycles; c++) {
     printf("=== CST Cycle %d: +Torque %d for %dms ===\n", c + 1, tq_cmd, run_ms);
@@ -148,7 +149,7 @@ void cst_torque_test(Motor& m1, int16 tq_cmd, int cycles) {
     usleep(200000);
   }
 
-  // �̫�@�w�n�k 0 ��x
+  // return to 0 at the end
   m1.set_target_torque(0);
 }
 
@@ -175,7 +176,7 @@ int main() {
 
   ifname = "enp3s0";
 
-  printf("�ϥΤ����d: %s\n", ifname);
+  printf("Interface: %s\n", ifname);
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
   constexpr MotorModes kMode = PP_Mode;// CSV have problem, may be unit is error?
@@ -186,7 +187,7 @@ int main() {
     return -1;
   }
 
-  // ���o motors �P session�]�ϥΪ̥i���^
+  // Get motors and session (user-visible)
   auto& motors = sys.motors();
   auto& sess = sys.session();
 
@@ -195,12 +196,12 @@ int main() {
 
   printf("Motor count = %d\n", motors.count());
 
-  // ? �]�w realtime callback�]callback �b main �~���^
+  // Set realtime callback (callback defined outside main)
   sess.setCallback(on_cycle);
 
-  // ? start: �����i OP + cyclicSession.start()
+  // start: enter OP + start cyclicSession
   if (!sys.run_async()) {
-    printf("sys.run_async ����\n");
+    printf("sys.run_async failed\n");
     sys.close();
     return -1;
   }
@@ -213,10 +214,10 @@ int main() {
   // m1.set_target_position(1000.0f);
   // m2.set_target_position(2000.0f);
 
-  // stop: �� thread + �^ SAFEOP
+  // stop: stop thread + back to SAFEOP
   // sys.stop();
 
-  // close: ec_close + �M�z�귽
+  // close: ec_close + cleanup resources
   sys.close();
   return 0;
 }

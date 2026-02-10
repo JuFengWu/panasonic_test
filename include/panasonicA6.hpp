@@ -1,11 +1,21 @@
 ﻿#pragma once
 
 #include "motors.hpp"
-#include "utilities.hpp"
+#include <memory>
+#include <cstdint>
+
+class MyEthercat;
+
+using uint8 = std::uint8_t;
+using uint16 = std::uint16_t;
+using int16 = std::int16_t;
+using int32 = std::int32_t;
+using uint32 = std::uint32_t;
+
 
 class PanasonicA6 : public Motor {
  public:
-  PanasonicA6(int slave, MotorModes mode);
+  PanasonicA6(int slave, MotorModes mode, std::shared_ptr<MyEthercat> ethercat);
 
   bool set_mode(MotorModes mode) override;
   bool set_target_position(float target) override;
@@ -42,7 +52,7 @@ private:
   void init_cst_mode(uint16 slave);
   void csv_set_target_velocity(uint16 slave, int32 vel_cmd);
   void csp_set_target_position(uint16 slave, float target_degree);
-  static inline void cst_set_target_torque(uint16 slave, int16 tq_cmd);
+  void cst_set_target_torque(uint16 slave, int16 tq_cmd);
   static inline double cmdps_to_rpm(int32_t cmd_per_sec);
   static inline int32_t rpm_to_cmdps(double rpm);
   static inline uint32_t rpmps_to_cmdps2(double rpm_per_sec);

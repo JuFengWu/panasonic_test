@@ -4,14 +4,15 @@
 #include "panasonicEthercatInitializer.hpp"
 
 #include <stdexcept>
+#include <utility>
 
-void AllMotors::initialize(MotorModel model, MotorModes mode, int count) {
+void AllMotors::initialize(MotorModel model, MotorModes mode, int count, std::shared_ptr<MyEthercat> ethercat) {
   model_ = model;
   mode_ = mode;
   motors_.clear();
   motors_.reserve(static_cast<size_t>(count));
   for (int i = 1; i <= count; ++i) {
-    motors_.push_back(create_motor(i));
+    motors_.push_back(create_motor(i, ethercat));
   }
 }
 
@@ -31,12 +32,12 @@ Motor& AllMotors::motor(int id) {
 
 int AllMotors::count() const { return static_cast<int>(motors_.size()); }
 
-std::unique_ptr<Motor> AllMotors::create_motor(int id) {
+std::unique_ptr<Motor> AllMotors::create_motor(int id, const std::shared_ptr<MyEthercat>& ethercat) {
   switch (model_) {
     case PanasonicA6MotorType:
-      return std::make_unique<PanasonicA6>(id, mode_);
+      return std::make_unique<PanasonicA6>(id, mode_, ethercat);
     default:
-      return std::make_unique<FakeMotor>(id, mode_);
+      return std::make_unique<FakeMotor>(id, mode_, nullptr);
   }
 }
 
@@ -45,14 +46,15 @@ MotionSystem::MotionSystem(MotorModel model, const char* ifname)
   initializer_ = create_initializer(model_);
 }
 
+
 bool MotionSystem::start_connect(int motor_count,int cyclePeriod, MotorModes mode) {
   motor_count_ = motor_count;
   mode_ = mode;
-  motors_.initialize(model_, mode_, motor_count_);
   initializer_ = create_initializer(model_);
   if (!initializer_) {
     return false;
   }
+  motors_.initialize(model_, mode_, motor_count_, initializer_->get_ethercat());
   auto fatal_handler = [this]() {
     if (!initializer_) {
       return;

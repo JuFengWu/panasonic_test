@@ -1,4 +1,5 @@
-﻿#include "motionSystem.hpp"
+﻿#include "Ethercat.hpp"
+#include "motionSystem.hpp"
 #include <iostream>
 #include <memory>
 #include <unistd.h>

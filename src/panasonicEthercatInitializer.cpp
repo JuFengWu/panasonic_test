@@ -1,60 +1,133 @@
 #include "panasonicEthercatInitializer.hpp"
 #include "motionSystem.hpp"
 
+#include <cstdint>
 #include <chrono>
 #include <functional>
+#include <time.h>
+#include <utility>
+
+namespace {
+using uint8 = std::uint8_t;
+using uint16 = std::uint16_t;
+using uint32 = std::uint32_t;
+using int16 = std::int16_t;
+using int32 = std::int32_t;
+
+inline bool sdo_write_u8(MyEthercat& ethercat, uint16 slave, uint16 index, uint8 sub, uint8 val) {
+    return ethercat.write_sdo_state(slave, index, sub, &val, static_cast<int>(sizeof(val)));
+}
+
+inline bool sdo_write_u16(MyEthercat& ethercat, uint16 slave, uint16 index, uint8 sub, uint16 val) {
+    return ethercat.write_sdo_state(slave, index, sub, &val, static_cast<int>(sizeof(val)));
+}
+
+inline bool sdo_write_u32(MyEthercat& ethercat, uint16 slave, uint16 index, uint8 sub, uint32 val) {
+    return ethercat.write_sdo_state(slave, index, sub, &val, static_cast<int>(sizeof(val)));
+}
+
+inline bool sdo_read_u8(MyEthercat& ethercat, uint16 slave, uint16 index, uint8 sub, uint8* out) {
+    return ethercat.read_sdo_state(slave, index, sub, out, static_cast<int>(sizeof(*out)));
+}
+
+inline bool sdo_read_u32(MyEthercat& ethercat, uint16 slave, uint16 index, uint8 sub, uint32* out) {
+    return ethercat.read_sdo_state(slave, index, sub, out, static_cast<int>(sizeof(*out)));
+}
+
+static inline void pe_set_i16(uint8 *p, int off, int16 v) {
+  p[off] = static_cast<uint8>(v & 0xFF);
+  p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
+}
+
+static inline int16 pe_get_i16(uint8 *p, int off) {
+  return static_cast<int16>(p[off] | (p[off + 1] << 8));
+}
+
+static inline uint16 pe_get_u16(uint8 *p, int off) {
+  return static_cast<uint16>(p[off] | (p[off + 1] << 8));
+}
+
+static inline void pe_set_u16(uint8 *p, int off, uint16 v) {
+  p[off] = static_cast<uint8>(v & 0xFF);
+  p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
+}
+
+static inline int32 pe_get_i32(uint8 *p, int off) {
+  return static_cast<int32>(p[off] | (p[off + 1] << 8) | (p[off + 2] << 16) |
+                 (p[off + 3] << 24));
+}
+
+static inline void pe_set_i32(uint8 *p, int off, int32 v) {
+  p[off] = static_cast<uint8>(v & 0xFF);
+  p[off + 1] = static_cast<uint8>((v >> 8) & 0xFF);
+  p[off + 2] = static_cast<uint8>((v >> 16) & 0xFF);
+  p[off + 3] = static_cast<uint8>((v >> 24) & 0xFF);
+}
+} // namespace
+
+
+
+PanasonicEthercatInitializer::PanasonicEthercatInitializer()
+    : ethercat_(std::make_shared<SoemEthercat>()) {}
 
 
 bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
 {
-    int ret = 0, l;
-    uint8 num_pdo;
-    uint8 num_entries;
+    if (!ethercat_) {
+        return false;
+    }
+
+    int ret = 0;
+    uint8 num_pdo = 0;
+    uint8 num_entries = 0;
 
     // --- RxPDO mapping object 1603h ---
-    l = sizeof(num_entries);
-    ret += ec_SDOread(slave, 0x1603, 0x00, FALSE, &l, &num_entries, EC_TIMEOUTRXM);
+    ret += sdo_read_u8(*ethercat_, slave, 0x1603, 0x00, &num_entries) ? 1 : 0;
     printf("RxPDO 1603 current entries = %d\n", num_entries);
 
     // clear mapping
     num_entries = 0;
-    ret += ec_SDOwrite(slave, 0x1603, 0x00, FALSE, sizeof(num_entries), &num_entries, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1603, 0x00, num_entries) ? 1 : 0;
 
     // 這裡如果你只是要用原本手冊 mapping 4，其實不用改 1603 子項目
     // 你貼的 code 有把 0x1603:09 改成 60B0(位置偏移) 只是額外功能
     // 如果要照貼的 code 做：
     uint32 mapping = 0x60B00020; // 60B0:00 32bit
-    ret += ec_SDOwrite(slave, 0x1603, 0x09, FALSE, sizeof(mapping), &mapping, EC_TIMEOUTRXM);
+    ret += sdo_write_u32(*ethercat_, slave, 0x1603, 0x09, mapping) ? 1 : 0;
 
     // set entries back
     num_entries = 9;
-    ret += ec_SDOwrite(slave, 0x1603, 0x00, FALSE, sizeof(num_entries), &num_entries, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1603, 0x00, num_entries) ? 1 : 0;
 
     // --- Assign RxPDO (1C12) ---
     num_pdo = 0;
-    ret += ec_SDOwrite(slave, 0x1C12, 0x00, FALSE, sizeof(num_pdo), &num_pdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1C12, 0x00, num_pdo) ? 1 : 0;
 
     uint16 idx_rxpdo = 0x1603;
-    ret += ec_SDOwrite(slave, 0x1C12, 0x01, FALSE, sizeof(idx_rxpdo), &idx_rxpdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u16(*ethercat_, slave, 0x1C12, 0x01, idx_rxpdo) ? 1 : 0;
 
     num_pdo = 1;
-    ret += ec_SDOwrite(slave, 0x1C12, 0x00, FALSE, sizeof(num_pdo), &num_pdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1C12, 0x00, num_pdo) ? 1 : 0;
 
     // --- Assign TxPDO (1C13) ---
     num_pdo = 0;
-    ret += ec_SDOwrite(slave, 0x1C13, 0x00, FALSE, sizeof(num_pdo), &num_pdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1C13, 0x00, num_pdo) ? 1 : 0;
 
     uint16 idx_txpdo = 0x1A03;
-    ret += ec_SDOwrite(slave, 0x1C13, 0x01, FALSE, sizeof(idx_txpdo), &idx_txpdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u16(*ethercat_, slave, 0x1C13, 0x01, idx_txpdo) ? 1 : 0;
 
     num_pdo = 1;
-    ret += ec_SDOwrite(slave, 0x1C13, 0x00, FALSE, sizeof(num_pdo), &num_pdo, EC_TIMEOUTRXM);
+    ret += sdo_write_u8(*ethercat_, slave, 0x1C13, 0x00, num_pdo) ? 1 : 0;
 
     printf("setup_minasa6b_pdo_mapping4 ret=%d\n", ret);
     return (ret > 0);
 }
 bool PanasonicEthercatInitializer::setInterpolationTimePeriod(uint16 slave, int us)
 {
+    if (!ethercat_) {
+        return false;
+    }
+
     uint32 u32val;
     uint8 u8val;
 
@@ -71,12 +144,12 @@ bool PanasonicEthercatInitializer::setInterpolationTimePeriod(uint16 slave, int 
     }
 
     int ok = 1;
-    ok &= sdo_write_u32(slave, 0x1C32, 0x02, u32val);
-    ok &= sdo_write_u8(slave, 0x60C2, 0x01, u8val);
+    ok &= sdo_write_u32(*ethercat_, slave, 0x1C32, 0x02, u32val);
+    ok &= sdo_write_u8(*ethercat_, slave, 0x60C2, 0x01, u8val);
 
     uint32 r32; uint8 r8;
-    sdo_read_u32(slave, 0x1C32, 0x02, &r32);
-    sdo_read_u8(slave, 0x60C2, 0x01, &r8);
+    sdo_read_u32(*ethercat_, slave, 0x1C32, 0x02, &r32);
+    sdo_read_u8(*ethercat_, slave, 0x60C2, 0x01, &r8);
 
     printf("Set interpolation time period %d us\n", us);
     printf("1C32:02 cycle time = %u ns\n", r32);
@@ -85,19 +158,27 @@ bool PanasonicEthercatInitializer::setInterpolationTimePeriod(uint16 slave, int 
     return ok;
 }
 void PanasonicEthercatInitializer::print_state(){
-    ec_readstate();
+    if (!ethercat_) {
+        return;
+    }
+    ethercat_->read_ehtercat_state();
     printf("++state++\n");
-    for (int i = 1; i <= ec_slavecount; i++) {  // 正確：從 1 開始
+    int count = ethercat_->get_slave_count();
+    for (int i = 1; i <= count; i++) {  // 正確：從 1 開始
         printf("Slave %d state=0x%02X, AL=0x%04X\n",
             i,
-            ec_slave[i].state,
-            ec_slave[i].ALstatuscode
+            ethercat_->get_slave_state(static_cast<uint16>(i)),
+            ethercat_->get_slave_al_status(static_cast<uint16>(i))
         );
     }
     printf("=====\n");
 }
 bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave) // TODO: let user set these values
 {
+    if (!ethercat_) {
+        return false;
+    }
+
     // 這些單位是 "internal position unit / s" 或 pulse/s
     // 先用大一點讓你肉眼看得出來動
     uint32 vel = 0x16000000;   // 你原本程式用過的值
@@ -105,9 +186,9 @@ bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave) // TO
     uint32 dec = 0x80000000;
 
     bool ok = true;
-    ok &= sdo_write_u32(slave, 0x6081, 0x00, vel); //Profile velocity
-    ok &= sdo_write_u32(slave, 0x6083, 0x00, acc); //Profile acceleration
-    ok &= sdo_write_u32(slave, 0x6084, 0x00, dec); //Profile deceleration
+    ok &= sdo_write_u32(*ethercat_, slave, 0x6081, 0x00, vel); //Profile velocity
+    ok &= sdo_write_u32(*ethercat_, slave, 0x6083, 0x00, acc); //Profile acceleration
+    ok &= sdo_write_u32(*ethercat_, slave, 0x6084, 0x00, dec); //Profile deceleration
 
     printf("Set 6081 vel=%u 6083 acc=%u 6084 dec=%u (%s)\n",
            vel, acc, dec, ok ? "OK" : "FAIL");
@@ -115,20 +196,24 @@ bool PanasonicEthercatInitializer::set_profile_motion_params(uint16 slave) // TO
 }
 bool PanasonicEthercatInitializer::get_slave_count(const char* ifname, int& count)
 {
-  if (!ec_init(ifname)){
+  if (!ethercat_) {
+    count = 0;
+    return false;
+  }
+  if (!ethercat_->init(ifname)){
     printf("ec_init 失敗\n");
     return false;
   }
 
   printf("ec_init OK\n");
 
-  if (ec_config_init(FALSE) <= 0){
+  if (!ethercat_->scan_slaves()){
     printf("找不到 EtherCAT 從站\n");
-    ec_close();
+    ethercat_->close();
     return false;
   }
-  printf("%d slaves found.\n", ec_slavecount);
-  count = ec_slavecount;
+  count = ethercat_->get_slave_count();
+  printf("%d slaves found.\n", count);
   return true;
 }
 bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int motor_count,int cyclePeriod, MotorModes mode)
@@ -137,7 +222,11 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   opened_ = true;
   initialized_ = true;
 
-  if (!ec_init(ifname))
+  if (!ethercat_) {
+      return -1;
+  }
+
+  if (!ethercat_->init(ifname))
   {
       printf("ec_init 失敗\n");
       return -1;
@@ -145,53 +234,56 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
 
   printf("ec_init OK\n");
 
-  if (ec_config_init(FALSE) <= 0)
+  if (!ethercat_->scan_slaves())
   {
       printf("找不到 EtherCAT 從站\n");
-      ec_close();
+      ethercat_->close();
       return -1;
   }
 
-  printf("%d slaves found.\n", ec_slavecount);
-  if(ec_slavecount!=motor_count){
+  int slavecount = ethercat_->get_slave_count();
+  printf("%d slaves found.\n", slavecount);
+  if(slavecount!=motor_count){
       printf("從站數量與預期不符\n");
-      ec_close();
+      ethercat_->close();
       return -1;
   }
-  ec_readstate();
+  ethercat_->read_ehtercat_state();
   print_state();
 
-
-  ec_slave[0].state = EC_STATE_PRE_OP;
-  ec_writestate(0);
+  ethercat_->set_slave_state(0, static_cast<uint16>(EthercatState::PreOp));
 
   // 等待真正進 PRE-OP
-  ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE * 4);
+  ethercat_->state_check(0, static_cast<uint16>(EthercatState::PreOp), ethercat_->timeout_state() * 4);
   print_state();
 
-  for (int i = 1; i <= ec_slavecount; i++) {
+  for (int i = 1; i <= slavecount; i++) {
       setup_minasa6b_pdo_mapping4(i); 
   }
   /// ====== 2. 自動 PDO mapping ======
-  ec_config_map(&ioMap);
-
-  //setInterpolationTimePeriod(SLAVE_ID, 4000);
+  if (ethercat_->config_pdo_mapping(&ioMap) <= 0) {
+      printf("config_pdo_mapping failed\n");
+      return -1;
+  }
 
   // ====== 3. 設定 DC ======
-  ec_configdc();
+  if (!ethercat_->setting_dc()) {
+      printf("setting_dc failed\n");
+      return -1;
+  }
 
   print_state();
 
   // ====== 4. 主站要求 slave 進 SAFE_OP ======
-  ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+  ethercat_->state_check(0, static_cast<uint16>(EthercatState::SafeOp), ethercat_->timeout_state());
   
-  for (int i = 1; i <= ec_slavecount; i++) {
+  for (int i = 1; i <= slavecount; i++) {
       setInterpolationTimePeriod(i, cyclePeriod*1000);// here!!
   }
   
   if(mode==PP_Mode){
     // ✅ 在 SAFEOP 做一次 SDO 設定 profile motion 參數（最穩）
-    for (int i = 1; i <= ec_slavecount; i++) {
+    for (int i = 1; i <= slavecount; i++) {
         set_profile_motion_params(i);
     }
   }
@@ -199,15 +291,20 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
   print_state();
 
   // ====== 5. 交換 PDO（至少 1 次）======
-  ec_send_processdata();
-  ec_receive_processdata(EC_TIMEOUTRET);
-
+  ethercat_->set_pdo_data();
+  ethercat_->get_pdo_data();
 
   return true;
 }
 void PanasonicEthercatInitializer::init_motion_params_pdo(uint16 slave, MotorModes mode)
 {
-    uint8 *out = (uint8*)ec_slave[slave].outputs;
+    if (!ethercat_) {
+        return;
+    }
+    uint8 *out = ethercat_->get_slave_outputs(slave);
+    if (!out) {
+        return;
+    }
 
     // mode = PP
     if (mode == PP_Mode){
@@ -223,25 +320,26 @@ void PanasonicEthercatInitializer::init_motion_params_pdo(uint16 slave, MotorMod
     }
     
     // 6071 target torque = 0 (PP 不用)
-    set_u16(out, 3, 0);
+    pe_set_u16(out, 3, static_cast<uint16>(0));
 
     // 6072 max torque (unit: 0.1% or 1% 視驅動器)
     // 先給 1000 (常見代表 100%)
-    set_u16(out, 5, 1000);
+    pe_set_u16(out, 5, static_cast<uint16>(1000));
 
     // 6080 max motor speed (你原本程式用 0x16000000)
-    set_i32(out, 11, 0x16000000);
+    pe_set_i32(out, 11, 0x16000000);
 
     // 60B8 touch probe function = 0
-    set_u16(out, 15, 0);
+    pe_set_u16(out, 15, static_cast<uint16>(0));
 
     // 60FF target velocity = 0 (PP 不用)
-    set_i32(out, 17, 0);
+    pe_set_i32(out, 17, 0);
 }
 
 bool PanasonicEthercatInitializer::start_async(CyclicSession& session, AllMotors& motors, bool call_session)
 {
   if (!opened_) return false;
+  if (!ethercat_) return false;
   if (running_) return true;
   if (worker_.joinable()) {
     worker_.join();
@@ -252,39 +350,40 @@ bool PanasonicEthercatInitializer::start_async(CyclicSession& session, AllMotors
   motors_ = &motors;
 
   // ====== 6. Set slaves to OP ======
-  ec_slave[0].state = EC_STATE_OPERATIONAL;
-  ec_writestate(0);
+  ethercat_->set_slave_state(0, static_cast<uint16>(EthercatState::Operational));
 
   // Wait for OP state
-  ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+  ethercat_->state_check(0, static_cast<uint16>(EthercatState::Operational), ethercat_->timeout_state());
   print_state();
   
   int chk = 40;
+  const uint16 op_state = static_cast<uint16>(EthercatState::Operational);
   do
   {
-      ec_send_processdata();
-      ec_receive_processdata(EC_TIMEOUTRET);
-      ec_statecheck(0, EC_STATE_OPERATIONAL, 50000);
-  } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
+      ethercat_->set_pdo_data();
+      ethercat_->get_pdo_data();
+      ethercat_->state_check(0, op_state, 50000);
+  } while (chk-- && (ethercat_->get_slave_state(0) != op_state));
 
   // Start PDO loop thread
   printf("Start PDO loop thread...\n");
 
   worker_ = std::thread(&PanasonicEthercatInitializer::run_loop_impl, this, std::ref(session), std::ref(motors));
-  osal_usleep(1000000);  // 10ms
+  usleep(1000000);  // 10ms
 
-  if (ec_slave[0].state != EC_STATE_OPERATIONAL)
+  if (ethercat_->get_slave_state(0) != op_state)
   {
       printf("Failed to reach OP state.\n");
-      ec_close();
+      ethercat_->close();
       return false;
   }
 
   printf("Reached OP state.\n");
 
-  for (int i = 1; i <= ec_slavecount; i++) {
+  int count = ethercat_->get_slave_count();
+  for (int i = 1; i <= count; i++) {
     auto motorMode = motors.motor(i).get_mode();
-    init_motion_params_pdo(i, motorMode);
+    init_motion_params_pdo(static_cast<uint16>(i), motorMode);
   }
 
   return true;
@@ -305,6 +404,10 @@ std::atomic<bool>& PanasonicEthercatInitializer::running_flag() { return running
 
 bool PanasonicEthercatInitializer::shutdown_ecat()
 {
+    if (!ethercat_) {
+        return false;
+    }
+
     bool ok = true;
 
     printf("\n========== shutdown_ecat() ==========\n");
@@ -313,7 +416,8 @@ bool PanasonicEthercatInitializer::shutdown_ecat()
     printf("[shutdown] Servo OFF...\n");
 
     if (motors_) {
-      for (int i = 1; i <= ec_slavecount; i++) {
+      int count = ethercat_->get_slave_count();
+      for (int i = 1; i <= count; i++) {
         motors_->motor(i).servo_off();
       }
     }
@@ -326,11 +430,10 @@ bool PanasonicEthercatInitializer::shutdown_ecat()
 
     // 3) 退回 SAFE_OP（最重要，避免 watchdog）
     printf("[shutdown] Switch master to SAFE_OP...\n");
-    ec_slave[0].state = EC_STATE_SAFE_OP;
-    ec_writestate(0);
+    ethercat_->set_slave_state(0, static_cast<uint16>(EthercatState::SafeOp));
 
     // 等待 master/slaves 真正進 SAFE_OP
-    if (ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE) != EC_STATE_SAFE_OP)
+    if (ethercat_->state_check(0, static_cast<uint16>(EthercatState::SafeOp), ethercat_->timeout_state()) != static_cast<uint16>(EthercatState::SafeOp))
     {
         printf("[shutdown] WARNING: Not all slaves reached SAFE_OP\n");
         ok = false;
@@ -355,7 +458,7 @@ bool PanasonicEthercatInitializer::shutdown_ecat()
 
     // 6) close EtherCAT
     printf("[shutdown] ec_close()\n");
-    ec_close();
+    ethercat_->close();
 
     printf("[shutdown] Done. ok=%d\n", ok);
     printf("=====================================\n\n");
@@ -378,7 +481,9 @@ void PanasonicEthercatInitializer::motor_close()
   running_ = false;
   motors_ = nullptr;
   if (opened_) {
-    ec_close();
+    if (ethercat_) {
+      ethercat_->close();
+    }
     opened_ = false;
   }
 }
@@ -429,8 +534,10 @@ void PanasonicEthercatInitializer::run_loop_impl(CyclicSession& session, AllMoto
       dt_samples = 0;
     }
 
-    ec_send_processdata();
-    ec_receive_processdata(EC_TIMEOUTRET);
+    if (ethercat_) {
+      ethercat_->set_pdo_data();
+      ethercat_->get_pdo_data();
+    }
 
     if (get_call_session_enabled()) {
       bool cycle_shutdown_request = false;

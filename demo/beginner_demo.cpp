@@ -1,7 +1,9 @@
+#include "Ethercat.hpp"
 #include "motionSystem.hpp"
 
 #include <cstdio>
 #include <iostream>
+#include <memory>
 #include <thread>
 
 static void read_position_callback(AllMotors& motors, bool& cycle_shutdown_request)

@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include <functional>
+#include <memory>
 #include <utility>
+
+class MyEthercat;
 typedef enum {
     PP_Mode,
     CSP_Mode,
@@ -23,7 +26,7 @@ struct MotionProfile {
 
 class Motor{
  public:
-  Motor(int slave, MotorModes mode);
+  Motor(int slave, MotorModes mode, std::shared_ptr<MyEthercat> ethercat);
   using FatalHandler = std::function<void()>;
   void set_fatal_handler(FatalHandler handler) { fatal_handler_ = std::move(handler); }
   virtual bool set_mode(MotorModes mode)=0;
@@ -45,6 +48,7 @@ class Motor{
  protected:
   int slave_;
   MotorModes mode_;
+  std::shared_ptr<MyEthercat> ethercat_;
   void notify_fatal() { if (fatal_handler_) fatal_handler_(); }
 
  private:

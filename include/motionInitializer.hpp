@@ -6,10 +6,12 @@
 #include <atomic>
 #include <condition_variable>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <thread>
 
 class AllMotors;
+class MyEthercat;
 
 enum class MotionInitError {
   Ok,
@@ -29,6 +31,7 @@ class IMotionInitializer {
   virtual bool initializer_run_async(CyclicSession& session, AllMotors& motors) = 0;
   virtual bool initializer_run_async_io_only(CyclicSession& session, AllMotors& motors) = 0;
   virtual bool get_slave_count(const char* ifname, int& count) = 0;
+  virtual std::shared_ptr<MyEthercat> get_ethercat() const { return nullptr; }
   bool initial_drive_motors();
   void set_call_session_enabled(bool enabled);
   bool get_call_session_enabled() const;

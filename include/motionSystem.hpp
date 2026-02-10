@@ -9,24 +9,28 @@
 #include <string>
 #include <vector>
 
+class MyEthercat;
+
 class AllMotors {
  public:
-  void initialize(MotorModel model, MotorModes mode, int count);
+  void initialize(MotorModel model, MotorModes mode, int count, std::shared_ptr<MyEthercat> ethercat);
   Motor& motor(int id);
   int count() const;
 
  private:
-  std::unique_ptr<Motor> create_motor(int id);
+  std::unique_ptr<Motor> create_motor(int id, const std::shared_ptr<MyEthercat>& ethercat);
 
   std::vector<std::unique_ptr<Motor>> motors_;
   MotorModel model_ = PanasonicA6MotorType;
   MotorModes mode_ = PP_Mode;
+
 };
 
 class MotionSystem {
  public:
   MotionSystem() = default;
   MotionSystem(MotorModel model, const char* ifname);
+
 
   bool start_connect(int motor_count, int cyclePeriod,MotorModes mode=PP_Mode);
 
