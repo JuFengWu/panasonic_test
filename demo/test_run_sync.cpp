@@ -256,7 +256,7 @@ static bool run_mode_test(MotorModes mode, Motor& m1) {
     case CSP_Mode:
       return run_csp_mode_test_cycle(m1);
     case CSV_Mode:
-      return run_csv_mode_test_cycle(m1, 500000, 2);
+      return run_csv_mode_test_cycle(m1, 100, 2);
     case CST_Mode:
       return run_cst_mode_test_cycle(m1, 10, 5);
     default:
@@ -273,7 +273,7 @@ int main() {
   printf("使用介面卡: %s\n", ifname);
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
-  constexpr MotorModes kMode = CSP_Mode;// CSV have problem, may be unit is error?
+  constexpr MotorModes kMode = CSV_Mode;// CSV have problem, may be unit is error?
   g_mode = kMode;
   int motor_count = 1;
   int cyclePeriod = 1; // in ms
