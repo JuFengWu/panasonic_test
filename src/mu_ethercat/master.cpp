@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cstring>
 #include <net/ethernet.h>
+#include <linux/if_ether.h>
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <sys/ioctl.h>
