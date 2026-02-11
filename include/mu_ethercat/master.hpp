@@ -69,6 +69,8 @@ class Master {
 
     int sock_fd_ = -1;
     int if_index_ = -1;
+    std::uint8_t if_mac_[6] = {0};
+    bool has_mac_ = false;
     std::string last_error_;
 };
 

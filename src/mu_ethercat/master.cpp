@@ -58,6 +58,16 @@ bool Master::open(const char* ifname) {
     }
     if_index_ = ifr.ifr_ifindex;
 
+    struct ifreq ifr_mac {};
+    std::strncpy(ifr_mac.ifr_name, ifname, sizeof(ifr_mac.ifr_name) - 1);
+    if (ioctl(sock_fd_, SIOCGIFHWADDR, &ifr_mac) < 0) {
+        set_error("SIOCGIFHWADDR failed");
+        close();
+        return false;
+    }
+    std::memcpy(if_mac_, ifr_mac.ifr_hwaddr.sa_data, sizeof(if_mac_));
+    has_mac_ = true;
+
     struct sockaddr_ll sll {};
     sll.sll_family = AF_PACKET;
     sll.sll_ifindex = if_index_;
@@ -83,6 +93,7 @@ void Master::close() {
         sock_fd_ = -1;
     }
     if_index_ = -1;
+    has_mac_ = false;
 #endif
 }
 
@@ -106,7 +117,21 @@ bool Master::send_frame(const std::uint8_t* data, std::size_t size) {
         return false;
     }
 
-    ssize_t sent = ::send(sock_fd_, data, size, 0);
+    if (size < 14) {
+        set_error("frame too small");
+        return false;
+    }
+
+    std::vector<std::uint8_t> frame(data, data + size);
+    std::uint8_t* eth = frame.data();
+    std::memset(eth, 0xFF, 6);  // broadcast dst
+    if (has_mac_) {
+        std::memcpy(eth + 6, if_mac_, 6);
+    }
+    eth[12] = 0x88;
+    eth[13] = 0xA4;
+
+    ssize_t sent = ::send(sock_fd_, frame.data(), frame.size(), 0);
     if (sent < 0 || static_cast<std::size_t>(sent) != size) {
         set_error("send failed");
         return false;
