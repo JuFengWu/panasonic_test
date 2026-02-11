@@ -223,7 +223,7 @@ void PanasonicA6::csp_set_target_position(uint16 slave, float target_degree) {
   }
   int32 target_cmd = deg_to_command(target_degree);
 
-  // CSP: �u�n�@����s 607A (offset=7)
+  // CSP: 607A (offset=7)
   a6_set_i32(out, 7, target_cmd);
 }
 

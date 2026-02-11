@@ -1,5 +1,6 @@
 #include "panasonicEthercatInitializer.hpp"
 #include "motionSystem.hpp"
+#include "MuEthercat.hpp"
 
 #include <cstdint>
 #include <chrono>
@@ -68,7 +69,8 @@ static inline void pe_set_i32(uint8 *p, int off, int32 v) {
 
 
 PanasonicEthercatInitializer::PanasonicEthercatInitializer()
-    : ethercat_(std::make_shared<SoemEthercat>()) {}
+//    : ethercat_(std::make_shared<SoemEthercat>()) {}
+    : ethercat_(std::make_shared<MuEthercat>()) {}
 
 
 bool PanasonicEthercatInitializer::setup_minasa6b_pdo_mapping4(uint16 slave)
@@ -224,6 +226,14 @@ bool PanasonicEthercatInitializer::motor_initial_connect(const char* ifname, int
 
   if (!ethercat_) {
       return false;
+  }
+
+  {
+      auto mu = std::dynamic_pointer_cast<MuEthercat>(ethercat_);
+      if (mu) {
+          const std::uint32_t cycle_ns = static_cast<std::uint32_t>(cyclePeriod) * 1000000u;
+          mu->set_dc_config(cycle_ns, 0, 0, 0);
+      }
   }
 
   if (!ethercat_->init(ifname))
