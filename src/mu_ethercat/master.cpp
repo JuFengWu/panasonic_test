@@ -15,6 +15,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef ETH_P_ETHERCAT
+#define ETH_P_ETHERCAT 0x88A4
+#endif
+
 namespace mu_ethercat {
 
 Master::Master() = default;
