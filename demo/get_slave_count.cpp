@@ -8,7 +8,7 @@ int main() {
 
   ifname = "enp3s0";
 
-  printf("使用介面卡: %s\n", ifname);
+  printf("using interface card: %s\n", ifname);
 
   MotionSystem sys(PanasonicA6MotorType, ifname);
 
